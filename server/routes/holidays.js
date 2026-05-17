@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireStaff } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(authenticate);
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/', requireStaff, async (req, res) => {
   try {
     const { holiday_date, holiday_name, plant_id, is_national } = req.body;
     const { rows } = await query(
@@ -49,7 +49,7 @@ router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.post('/import', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/import', requireStaff, async (req, res) => {
   try {
     const { holidays } = req.body;
     if (!Array.isArray(holidays) || !holidays.length) {
@@ -73,7 +73,7 @@ router.post('/import', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.delete('/:id', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.delete('/:id', requireStaff, async (req, res) => {
   try {
     await query('DELETE FROM holidays WHERE id = $1', [req.params.id]);
     res.json({ message: 'Deleted' });

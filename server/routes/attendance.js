@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireStaff } = require('../middleware/auth');
 const { compareRosterAttendance } = require('../services/attendanceMatcher');
 const { notifyAttendanceMismatch } = require('../services/email');
 
@@ -140,7 +140,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/', requireStaff, async (req, res) => {
   try {
     const { emp_id, attendance_date, punch_in, punch_out, status, notes } = req.body;
     const { rows } = await query(
@@ -158,7 +158,7 @@ router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.post('/notify-mismatches', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/notify-mismatches', requireStaff, async (req, res) => {
   try {
     const { start_date, end_date } = req.body;
     const { mismatches } = await buildMismatchRows(start_date, end_date);

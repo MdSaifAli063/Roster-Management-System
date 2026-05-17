@@ -17,7 +17,7 @@ export default function Leave() {
     leave_type: 'ANNUAL',
     notes: '',
   });
-  const canReview = user?.role === 'ADMIN' || user?.role === 'HR_USER';
+  const canReview = ['ADMIN', 'HR_USER', 'TRAINING_MANAGER'].includes(user?.role);
 
   const load = () => api.get('/leave').then((r) => setRequests(r.data));
   useEffect(() => {

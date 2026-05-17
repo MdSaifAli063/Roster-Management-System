@@ -73,7 +73,7 @@ async function getHrEmails() {
   const notify = process.env.HR_NOTIFY_EMAIL;
   if (notify) return notify.split(',').map((e) => e.trim());
   const { rows } = await query(
-    `SELECT email FROM users WHERE role IN ('ADMIN', 'HR_USER') AND email IS NOT NULL`
+    `SELECT email FROM users WHERE role IN ('ADMIN', 'HR_USER', 'TRAINING_MANAGER') AND email IS NOT NULL`
   );
   return rows.map((r) => r.email);
 }

@@ -31,6 +31,7 @@ async function migrate() {
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   await pool.query(schema);
   await pool.query('ALTER TABLE employees ADD COLUMN IF NOT EXISTS email VARCHAR(100)');
+  await pool.query('ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(30)');
   console.log('Database schema applied successfully.');
   await pool.end();
 }

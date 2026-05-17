@@ -25,4 +25,7 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { authenticate, requireRole };
+const { STAFF_ROLES } = require('../constants/roles');
+const requireStaff = requireRole(...STAFF_ROLES);
+
+module.exports = { authenticate, requireRole, requireStaff };

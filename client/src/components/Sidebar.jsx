@@ -1,26 +1,33 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, CalendarDays, Building2,
-  Clock, Palmtree, FileBarChart, Settings, ArrowLeftRight, Eye, Plane,
+  Clock, Palmtree, FileBarChart, Settings, ArrowLeftRight, Eye, Plane, UserCircle,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
+import { isStaff } from '../lib/auth';
 
-const links = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/manage-roster', icon: Calendar, label: 'Manage Roster' },
-  { to: '/view-roster', icon: Eye, label: 'View Roster' },
-  { to: '/actual-roster', icon: CalendarDays, label: 'Actual Roster' },
-  { to: '/leave', icon: Plane, label: 'Leave' },
-  { to: '/employees', icon: Users, label: 'Employees' },
-  { to: '/shifts', icon: Clock, label: 'Shifts' },
-  { to: '/holidays', icon: Palmtree, label: 'Holidays' },
-  { to: '/plants', icon: Building2, label: 'Plant Master' },
-  { to: '/assignments', icon: ArrowLeftRight, label: 'Reassignment' },
-  { to: '/reports', icon: FileBarChart, label: 'Reports' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+const allLinks = [
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard', staffOnly: true },
+  { to: '/manage-roster', icon: Calendar, label: 'Manage Roster', staffOnly: true },
+  { to: '/view-roster', icon: Eye, label: 'View Roster', staffOnly: false },
+  { to: '/actual-roster', icon: CalendarDays, label: 'Actual Roster', staffOnly: true },
+  { to: '/leave', icon: Plane, label: 'Leave', staffOnly: false },
+  { to: '/employees', icon: Users, label: 'Employees', staffOnly: true },
+  { to: '/shifts', icon: Clock, label: 'Shifts', staffOnly: true },
+  { to: '/holidays', icon: Palmtree, label: 'Holidays', staffOnly: true },
+  { to: '/plants', icon: Building2, label: 'Plant Master', staffOnly: true },
+  { to: '/assignments', icon: ArrowLeftRight, label: 'Reassignment', staffOnly: true },
+  { to: '/reports', icon: FileBarChart, label: 'Reports', staffOnly: true },
+  { to: '/profile', icon: UserCircle, label: 'Profile', staffOnly: false },
+  { to: '/settings', icon: Settings, label: 'Settings', staffOnly: false },
 ];
 
 export default function Sidebar({ collapsed }) {
+  const { user } = useAuth();
+  const staff = isStaff(user?.role);
+  const links = allLinks.filter((l) => staff || !l.staffOnly);
+
   return (
     <aside
       className={cn(

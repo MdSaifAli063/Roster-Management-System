@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireStaff } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(authenticate);
@@ -89,7 +89,7 @@ router.get('/view', async (req, res) => {
   return router.handle(req, res);
 });
 
-router.post('/generate', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/generate', requireStaff, async (req, res) => {
   try {
     const { emp_ids, start_date, end_date, shift_pattern_id } = req.body;
     if (!emp_ids?.length || !start_date || !end_date || !shift_pattern_id) {
@@ -154,7 +154,7 @@ router.post('/generate', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.post('/bulk', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/bulk', requireStaff, async (req, res) => {
   try {
     const { entries } = req.body;
     for (const e of entries) {
@@ -174,7 +174,7 @@ router.post('/bulk', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.put('/:id', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.put('/:id', requireStaff, async (req, res) => {
   try {
     const b = req.body;
     const { rows } = await query(
@@ -190,7 +190,7 @@ router.put('/:id', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.put('/cell/:empId/:date', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.put('/cell/:empId/:date', requireStaff, async (req, res) => {
   try {
     const { empId, date } = req.params;
     const b = req.body;

@@ -3,6 +3,11 @@ import api from '../api/client';
 
 const AuthContext = createContext(null);
 
+function persistSession(token, user) {
+  localStorage.setItem('token', token);
+  localStorage.setItem('user', JSON.stringify(user));
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
@@ -20,7 +25,10 @@ export function AuthProvider({ children }) {
       return;
     }
     api.get('/auth/me')
-      .then((res) => setUser(res.data))
+      .then((res) => {
+        setUser(res.data);
+        localStorage.setItem('user', JSON.stringify(res.data));
+      })
       .catch(() => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -31,8 +39,14 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    persistSession(data.token, data.user);
+    setUser(data.user);
+    return data.user;
+  };
+
+  const signup = async ({ name, email, password, role }) => {
+    const { data } = await api.post('/auth/signup', { name, email, password, role });
+    persistSession(data.token, data.user);
     setUser(data.user);
     return data.user;
   };
@@ -44,7 +58,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

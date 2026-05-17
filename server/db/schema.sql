@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(100),
   email VARCHAR(100) UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  role VARCHAR(20) DEFAULT 'HR_USER',
+  role VARCHAR(30) DEFAULT 'HR_USER',
   created_at TIMESTAMP DEFAULT NOW()
 );
 

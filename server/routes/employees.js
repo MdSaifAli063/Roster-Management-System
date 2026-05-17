@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireStaff } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(authenticate);
@@ -99,7 +99,7 @@ router.get('/filters', async (_req, res) => {
   }
 });
 
-router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/', requireStaff, async (req, res) => {
   try {
     const b = req.body;
     const { rows } = await query(
@@ -114,7 +114,7 @@ router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.put('/:id', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.put('/:id', requireStaff, async (req, res) => {
   try {
     const b = req.body;
     const { rows } = await query(
@@ -130,7 +130,7 @@ router.put('/:id', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.delete('/:id', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.delete('/:id', requireStaff, async (req, res) => {
   try {
     await query('DELETE FROM employees WHERE id = $1', [req.params.id]);
     res.json({ message: 'Deleted' });

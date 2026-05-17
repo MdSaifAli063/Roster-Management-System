@@ -3,8 +3,72 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { query } = require('../db');
 const { authenticate } = require('../middleware/auth');
+const { SIGNUP_ROLES, ROLES } = require('../constants/roles');
 
 const router = express.Router();
+
+function signToken(user) {
+  return jwt.sign(
+    { id: user.id, email: user.email, role: user.role, name: user.name },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+}
+
+function publicUser(row) {
+  return { id: row.id, name: row.name, email: row.email, role: row.role, created_at: row.created_at };
+}
+
+function validatePassword(password) {
+  if (!password || password.length < 8) {
+    return 'Password must be at least 8 characters';
+  }
+  return null;
+}
+
+router.post('/signup', async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+
+    if (!name?.trim() || !normalizedEmail || !password || !role) {
+      return res.status(400).json({ error: 'Name, email, password, and role are required' });
+    }
+
+    if (!SIGNUP_ROLES.includes(role)) {
+      return res.status(400).json({ error: 'Invalid role selected' });
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) return res.status(400).json({ error: passwordError });
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({ error: 'Invalid email address' });
+    }
+
+    const { rows: existing } = await query('SELECT id FROM users WHERE email = $1', [normalizedEmail]);
+    if (existing.length) {
+      return res.status(409).json({ error: 'An account with this email already exists' });
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+    const { rows } = await query(
+      `INSERT INTO users (name, email, password_hash, role)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, name, email, role, created_at`,
+      [name.trim(), normalizedEmail, password_hash, role]
+    );
+
+    const user = rows[0];
+    const token = signToken(user);
+
+    res.status(201).json({ token, user: publicUser(user) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
 
 router.post('/login', async (req, res) => {
   try {
@@ -13,22 +77,14 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password required' });
     }
 
-    const { rows } = await query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
+    const { rows } = await query('SELECT * FROM users WHERE email = $1', [email.trim().toLowerCase()]);
     const user = rows[0];
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, name: user.name },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.json({
-      token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
-    });
+    const token = signToken(user);
+    res.json({ token, user: publicUser(user) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Login failed' });
@@ -50,6 +106,15 @@ router.get('/me', authenticate, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch user' });
   }
+});
+
+router.get('/roles', (_req, res) => {
+  res.json(
+    SIGNUP_ROLES.map((value) => ({
+      value,
+      label: value === ROLES.EMPLOYEE ? 'Employee' : value === ROLES.HR_USER ? 'HR User' : 'Training Manager',
+    }))
+  );
 });
 
 module.exports = router;

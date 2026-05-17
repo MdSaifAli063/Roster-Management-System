@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireStaff } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(authenticate);
@@ -14,7 +14,7 @@ router.get('/', async (_req, res) => {
   }
 });
 
-router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/', requireStaff, async (req, res) => {
   try {
     const b = req.body;
     const { rows } = await query(
@@ -28,7 +28,7 @@ router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.put('/:id', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.put('/:id', requireStaff, async (req, res) => {
   try {
     const b = req.body;
     const { rows } = await query(
@@ -57,7 +57,7 @@ router.get('/patterns', async (_req, res) => {
   }
 });
 
-router.post('/patterns', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/patterns', requireStaff, async (req, res) => {
   try {
     const b = req.body;
     const { rows } = await query(
@@ -71,7 +71,7 @@ router.post('/patterns', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.put('/patterns/:id', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.put('/patterns/:id', requireStaff, async (req, res) => {
   try {
     const b = req.body;
     const { rows } = await query(

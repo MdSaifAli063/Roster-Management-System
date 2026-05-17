@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireStaff } = require('../middleware/auth');
 const { notifyReassignment } = require('../services/email');
 
 const router = express.Router();
@@ -25,7 +25,7 @@ router.get('/', async (_req, res) => {
   }
 });
 
-router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/', requireStaff, async (req, res) => {
   try {
     const { from_emp_id, to_emp_id, assignment_date, reason, notes } = req.body;
     const { rows } = await query(

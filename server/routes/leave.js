@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireRole, requireStaff } = require('../middleware/auth');
 const { notifyLeaveSubmitted, notifyLeaveDecision } = require('../services/email');
 
 const router = express.Router();
@@ -48,7 +48,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:id/approve', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.put('/:id/approve', requireStaff, async (req, res) => {
   try {
     const { rows } = await query(
       `UPDATE leave_requests SET status = 'APPROVED', reviewed_by = $1, reviewed_at = NOW()
@@ -70,7 +70,7 @@ router.put('/:id/approve', requireRole('ADMIN', 'HR_USER'), async (req, res) => 
   }
 });
 
-router.put('/:id/reject', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.put('/:id/reject', requireStaff, async (req, res) => {
   try {
     const { rows } = await query(
       `UPDATE leave_requests SET status = 'REJECTED', reviewed_by = $1, reviewed_at = NOW()

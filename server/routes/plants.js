@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
-const { authenticate, requireRole } = require('../middleware/auth');
+const { authenticate, requireStaff } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(authenticate);
@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.post('/', requireStaff, async (req, res) => {
   try {
     const { plant_code, plant_name, location, description } = req.body;
     const { rows } = await query(
@@ -37,7 +37,7 @@ router.post('/', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
   }
 });
 
-router.put('/:id', requireRole('ADMIN', 'HR_USER'), async (req, res) => {
+router.put('/:id', requireStaff, async (req, res) => {
   try {
     const { plant_code, plant_name, location, description } = req.body;
     const { rows } = await query(
