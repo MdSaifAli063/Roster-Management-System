@@ -145,6 +145,21 @@ CREATE TABLE IF NOT EXISTS leave_requests (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- In-app notifications (real-time)
+CREATE TABLE IF NOT EXISTS user_notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  message TEXT,
+  link VARCHAR(200),
+  payload JSONB DEFAULT '{}',
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_notifications_user ON user_notifications(user_id, is_read, created_at DESC);
+
 -- Email notification audit log
 CREATE TABLE IF NOT EXISTS notification_log (
   id SERIAL PRIMARY KEY,

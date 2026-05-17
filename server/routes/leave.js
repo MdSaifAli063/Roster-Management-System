@@ -2,6 +2,10 @@ const express = require('express');
 const { query } = require('../db');
 const { authenticate, requireRole, requireStaff } = require('../middleware/auth');
 const { notifyLeaveSubmitted, notifyLeaveDecision } = require('../services/email');
+const {
+  notifyLeaveSubmittedRealtime,
+  notifyLeaveDecisionRealtime,
+} = require('../services/inAppNotifications');
 
 const router = express.Router();
 router.use(authenticate);
@@ -55,7 +59,10 @@ router.post('/', async (req, res) => {
     const leave = rows[0];
     const { rows: empRows } = await query('SELECT * FROM employees WHERE id = $1', [emp_id]);
     const employee = empRows[0];
-    await notifyLeaveSubmitted({ leave, employee });
+    await Promise.all([
+      notifyLeaveSubmitted({ leave, employee }),
+      notifyLeaveSubmittedRealtime({ leave, employee }),
+    ]);
     res.status(201).json(leave);
   } catch (err) {
     res.status(500).json({ error: 'Failed to create leave request' });
@@ -72,12 +79,20 @@ router.put('/:id/approve', requireStaff, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const leave = rows[0];
     const { rows: empRows } = await query('SELECT * FROM employees WHERE id = $1', [leave.emp_id]);
-    await notifyLeaveDecision({
-      leave,
-      employee: empRows[0],
-      approved: true,
-      reviewerName: req.user.name,
-    });
+    await Promise.all([
+      notifyLeaveDecision({
+        leave,
+        employee: empRows[0],
+        approved: true,
+        reviewerName: req.user.name,
+      }),
+      notifyLeaveDecisionRealtime({
+        leave,
+        employee: empRows[0],
+        approved: true,
+        reviewerName: req.user.name,
+      }),
+    ]);
     res.json(leave);
   } catch (err) {
     res.status(500).json({ error: 'Approve failed' });
@@ -94,12 +109,20 @@ router.put('/:id/reject', requireStaff, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const leave = rows[0];
     const { rows: empRows } = await query('SELECT * FROM employees WHERE id = $1', [leave.emp_id]);
-    await notifyLeaveDecision({
-      leave,
-      employee: empRows[0],
-      approved: false,
-      reviewerName: req.user.name,
-    });
+    await Promise.all([
+      notifyLeaveDecision({
+        leave,
+        employee: empRows[0],
+        approved: false,
+        reviewerName: req.user.name,
+      }),
+      notifyLeaveDecisionRealtime({
+        leave,
+        employee: empRows[0],
+        approved: false,
+        reviewerName: req.user.name,
+      }),
+    ]);
     res.json(leave);
   } catch (err) {
     res.status(500).json({ error: 'Reject failed' });

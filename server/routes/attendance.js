@@ -4,6 +4,10 @@ const { authenticate, requireStaff } = require('../middleware/auth');
 const { ROLES } = require('../constants/roles');
 const { compareRosterAttendance } = require('../services/attendanceMatcher');
 const { notifyAttendanceMismatch } = require('../services/email');
+const {
+  notifyAttendanceMarkRealtime,
+  notifyAttendanceMismatchRealtime,
+} = require('../services/inAppNotifications');
 const { resolveEmployeeForUser } = require('../services/employeeLink');
 
 function pad(n) {
@@ -203,6 +207,11 @@ router.post('/mark-in', async (req, res) => {
        RETURNING *`,
       [employee.id, today, punchIn]
     );
+    await notifyAttendanceMarkRealtime({
+      employee,
+      action: 'in',
+      time: punchIn.slice(0, 5),
+    });
     res.json(rows[0]);
   } catch (err) {
     console.error(err);
@@ -232,6 +241,11 @@ router.post('/mark-out', async (req, res) => {
        RETURNING *`,
       [employee.id, today, punchOut]
     );
+    await notifyAttendanceMarkRealtime({
+      employee,
+      action: 'out',
+      time: punchOut.slice(0, 5),
+    });
     res.json(rows[0]);
   } catch (err) {
     console.error(err);
@@ -297,7 +311,11 @@ router.post('/notify-mismatches', requireStaff, async (req, res) => {
     });
     const results = [];
     for (const [date, list] of Object.entries(byDate)) {
-      results.push(await notifyAttendanceMismatch({ mismatches: list, date }));
+      await Promise.all([
+        notifyAttendanceMismatch({ mismatches: list, date }),
+        notifyAttendanceMismatchRealtime({ mismatches: list, date }),
+      ]);
+      results.push({ date });
     }
     res.json({ notified: results.length, mismatches: mismatches.length });
   } catch (err) {

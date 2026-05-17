@@ -1,10 +1,12 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { setupClient } = require('./setupClient');
+const { initRealtime } = require('./realtime');
 
 const authRoutes = require('./routes/auth');
 const employeeRoutes = require('./routes/employees');
@@ -18,6 +20,7 @@ const attendanceRoutes = require('./routes/attendance');
 const leaveRoutes = require('./routes/leave');
 const dashboardRoutes = require('./routes/dashboard');
 const calendarRoutes = require('./routes/calendar');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -48,6 +51,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/leave', leaveRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/calendar', calendarRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
@@ -57,9 +61,13 @@ app.use((err, _req, res, _next) => {
 async function start() {
   await setupClient(app);
 
-  app.listen(PORT, () => {
+  const server = http.createServer(app);
+  initRealtime(server);
+
+  server.listen(PORT, () => {
     console.log(`Roster app running at http://localhost:${PORT}`);
     console.log(`API: http://localhost:${PORT}/api`);
+    console.log(`WebSocket: /socket.io`);
   });
 }
 

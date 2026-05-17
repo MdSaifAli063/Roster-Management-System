@@ -2,6 +2,7 @@ const express = require('express');
 const { query } = require('../db');
 const { authenticate, requireStaff } = require('../middleware/auth');
 const { notifyReassignment } = require('../services/email');
+const { notifyReassignmentRealtime } = require('../services/inAppNotifications');
 
 const router = express.Router();
 router.use(authenticate);
@@ -37,14 +38,23 @@ router.post('/', requireStaff, async (req, res) => {
     const { rows: fromRows } = await query('SELECT * FROM employees WHERE id = $1', [from_emp_id]);
     const { rows: toRows } = await query('SELECT * FROM employees WHERE id = $1', [to_emp_id]);
 
-    await notifyReassignment({
-      fromEmp: fromRows[0],
-      toEmp: toRows[0],
-      date: assignment_date,
-      reason,
-      notes,
-      assignedBy: req.user.name || req.user.email,
-    });
+    await Promise.all([
+      notifyReassignment({
+        fromEmp: fromRows[0],
+        toEmp: toRows[0],
+        date: assignment_date,
+        reason,
+        notes,
+        assignedBy: req.user.name || req.user.email,
+      }),
+      notifyReassignmentRealtime({
+        fromEmp: fromRows[0],
+        toEmp: toRows[0],
+        date: assignment_date,
+        reason,
+        assignedBy: req.user.name || req.user.email,
+      }),
+    ]);
 
     res.status(201).json(rows[0]);
   } catch (err) {

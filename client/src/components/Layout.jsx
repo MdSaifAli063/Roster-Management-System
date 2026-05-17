@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, Link } from 'react-router-dom';
-import { Menu, LogOut, Bell } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 import Sidebar from './Sidebar';
 import Button from './ui/Button';
 import { ThemeToggleButton } from './ThemeToggle';
@@ -53,12 +54,7 @@ export default function Layout() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggleButton />
-            <button
-              type="button"
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-            >
-              <Bell className="h-5 w-5" />
-            </button>
+            <NotificationBell />
             <Link
               to="/profile"
               className="hidden rounded-lg px-2 py-1 text-sm text-slate-600 transition-colors hover:bg-slate-100 hover:text-navy sm:block dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
