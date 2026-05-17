@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { query } = require('../db');
 const { authenticate } = require('../middleware/auth');
 const { SIGNUP_ROLES, ROLES } = require('../constants/roles');
+const { resolveEmployeeForUser } = require('../services/employeeLink');
 
 const router = express.Router();
 
@@ -61,6 +62,9 @@ router.post('/signup', async (req, res) => {
     );
 
     const user = rows[0];
+    if (role === ROLES.EMPLOYEE) {
+      await resolveEmployeeForUser(user);
+    }
     const token = signToken(user);
 
     res.status(201).json({ token, user: publicUser(user) });

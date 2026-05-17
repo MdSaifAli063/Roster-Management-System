@@ -15,8 +15,7 @@ export function isStaff(role) {
   return [ROLES.ADMIN, ROLES.HR_USER, ROLES.TRAINING_MANAGER].includes(role);
 }
 
-export function getHomePath(role) {
-  if (role === ROLES.EMPLOYEE) return '/view-roster';
+export function getHomePath() {
   return '/';
 }
 

@@ -18,6 +18,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import Leave from './pages/Leave';
+import Attendance from './pages/Attendance';
 
 function Staff({ children }) {
   return <StaffRoute>{children}</StaffRoute>;
@@ -37,11 +38,12 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Staff><Dashboard /></Staff>} />
+              <Route index element={<Dashboard />} />
               <Route path="manage-roster" element={<Staff><ManageRoster /></Staff>} />
               <Route path="view-roster" element={<ViewRoster />} />
               <Route path="actual-roster" element={<Staff><ActualRoster /></Staff>} />
               <Route path="leave" element={<Leave />} />
+              <Route path="attendance" element={<Attendance />} />
               <Route path="employees" element={<Staff><Employees /></Staff>} />
               <Route path="shifts" element={<Staff><Shifts /></Staff>} />
               <Route path="holidays" element={<Staff><Holidays /></Staff>} />

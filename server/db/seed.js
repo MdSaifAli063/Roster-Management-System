@@ -27,6 +27,12 @@ async function seed() {
      ON CONFLICT (email) DO NOTHING`,
     [hash]
   );
+  await query(
+    `INSERT INTO users (name, email, password_hash, role)
+     VALUES ('Demo Employee', 'employee@roster.com', $1, 'EMPLOYEE')
+     ON CONFLICT (email) DO NOTHING`,
+    [hash]
+  );
 
   const plants = [
     ['GUR', 'Gurgaon Office', 'Gurgaon', 'India HQ'],
@@ -180,10 +186,13 @@ async function seed() {
   );
 
   console.log('Seed completed.');
+  await query(`UPDATE employees SET email = 'employee@roster.com' WHERE emp_code = '0005'`);
+
   console.log('Demo logins (password: admin123):');
   console.log('  admin@roster.com (Admin)');
   console.log('  hr@roster.com (HR User)');
   console.log('  training@roster.com (Training Manager)');
+  console.log('  employee@roster.com (Employee — linked to emp 0005)');
   await pool.end();
 }
 

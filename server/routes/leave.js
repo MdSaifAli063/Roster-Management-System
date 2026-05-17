@@ -6,9 +6,19 @@ const { notifyLeaveSubmitted, notifyLeaveDecision } = require('../services/email
 const router = express.Router();
 router.use(authenticate);
 
+const { resolveEmployeeForUser } = require('../services/employeeLink');
+
+async function employeeIdForUser(user) {
+  const employee = await resolveEmployeeForUser(user);
+  return employee?.id;
+}
+
 router.get('/', async (req, res) => {
   try {
-    const { status, emp_id } = req.query;
+    let { status, emp_id } = req.query;
+    if (req.user.role === 'EMPLOYEE') {
+      emp_id = await employeeIdForUser(req.user);
+    }
     const conditions = ['1=1'];
     const params = [];
     let i = 1;
@@ -32,7 +42,11 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { emp_id, start_date, end_date, leave_type, notes } = req.body;
+    let { emp_id, start_date, end_date, leave_type, notes } = req.body;
+    if (req.user.role === 'EMPLOYEE') {
+      emp_id = await employeeIdForUser(req.user);
+      if (!emp_id) return res.status(400).json({ error: 'No employee record linked to your email' });
+    }
     const { rows } = await query(
       `INSERT INTO leave_requests (emp_id, start_date, end_date, leave_type, notes)
        VALUES ($1,$2,$3,$4,$5) RETURNING *`,

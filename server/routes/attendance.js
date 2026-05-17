@@ -1,8 +1,19 @@
 const express = require('express');
 const { query } = require('../db');
 const { authenticate, requireStaff } = require('../middleware/auth');
+const { ROLES } = require('../constants/roles');
 const { compareRosterAttendance } = require('../services/attendanceMatcher');
 const { notifyAttendanceMismatch } = require('../services/email');
+const { resolveEmployeeForUser } = require('../services/employeeLink');
+
+function pad(n) {
+  return String(n).padStart(2, '0');
+}
+
+function dateTodayStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
 
 const router = express.Router();
 router.use(authenticate);
@@ -117,15 +128,132 @@ router.get('/mismatches', async (req, res) => {
   }
 });
 
+router.get('/my', async (req, res) => {
+  try {
+    if (req.user.role !== ROLES.EMPLOYEE) {
+      return res.status(403).json({ error: 'Employees only' });
+    }
+    const employee = await resolveEmployeeForUser(req.user);
+    if (!employee) {
+      return res.status(400).json({ error: 'No employee profile linked' });
+    }
+
+    const today = dateTodayStr();
+    const { rows: todayAtt } = await query(
+      'SELECT * FROM attendance_records WHERE emp_id = $1 AND attendance_date = $2',
+      [employee.id, today]
+    );
+    const { rows: todayRoster } = await query(
+      `SELECT r.*, s.shift_name FROM rosters r
+       LEFT JOIN shifts s ON r.shift_id = s.id
+       WHERE r.emp_id = $1 AND r.roster_date = $2`,
+      [employee.id, today]
+    );
+
+    const start = req.query.start_date;
+    const end = req.query.end_date;
+    let history = [];
+    if (start && end) {
+      const { rows } = await query(
+        `SELECT a.*, r.status AS roster_status, r.shift_start, r.shift_end
+         FROM attendance_records a
+         LEFT JOIN rosters r ON r.emp_id = a.emp_id AND r.roster_date = a.attendance_date
+         WHERE a.emp_id = $1 AND a.attendance_date >= $2 AND a.attendance_date <= $3
+         ORDER BY a.attendance_date DESC`,
+        [employee.id, start, end]
+      );
+      history = rows;
+    }
+
+    res.json({
+      employee: {
+        id: employee.id,
+        emp_code: employee.emp_code,
+        emp_name: employee.emp_name,
+      },
+      today,
+      todayAttendance: todayAtt[0] || null,
+      todayRoster: todayRoster[0] || null,
+      history,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load attendance' });
+  }
+});
+
+router.post('/mark-in', async (req, res) => {
+  try {
+    if (req.user.role !== ROLES.EMPLOYEE) {
+      return res.status(403).json({ error: 'Employees only' });
+    }
+    const employee = await resolveEmployeeForUser(req.user);
+    if (!employee) return res.status(400).json({ error: 'No employee profile found' });
+
+    const today = dateTodayStr();
+    const now = new Date();
+    const punchIn = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    const { rows } = await query(
+      `INSERT INTO attendance_records (emp_id, attendance_date, punch_in, status, source)
+       VALUES ($1, $2, $3, 'PRESENT', 'MARK_IN')
+       ON CONFLICT (emp_id, attendance_date) DO UPDATE SET
+         punch_in = COALESCE(attendance_records.punch_in, EXCLUDED.punch_in),
+         status = 'PRESENT', source = 'MARK_IN'
+       RETURNING *`,
+      [employee.id, today, punchIn]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Mark in failed' });
+  }
+});
+
+router.post('/mark-out', async (req, res) => {
+  try {
+    if (req.user.role !== ROLES.EMPLOYEE) {
+      return res.status(403).json({ error: 'Employees only' });
+    }
+    const employee = await resolveEmployeeForUser(req.user);
+    if (!employee) return res.status(400).json({ error: 'No employee profile found' });
+
+    const today = dateTodayStr();
+    const now = new Date();
+    const punchOut = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    const { rows } = await query(
+      `INSERT INTO attendance_records (emp_id, attendance_date, punch_out, status, source)
+       VALUES ($1, $2, $3, 'PRESENT', 'MARK_IN')
+       ON CONFLICT (emp_id, attendance_date) DO UPDATE SET
+         punch_out = EXCLUDED.punch_out,
+         punch_in = COALESCE(attendance_records.punch_in, EXCLUDED.punch_in),
+         status = 'PRESENT'
+       RETURNING *`,
+      [employee.id, today, punchOut]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Mark out failed' });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     const { start_date, end_date, emp_id } = req.query;
     const conditions = ['1=1'];
     const params = [];
     let i = 1;
+    if (req.user.role === ROLES.EMPLOYEE) {
+      const employee = await resolveEmployeeForUser(req.user);
+      if (!employee) return res.json([]);
+      conditions.push(`a.emp_id = $${i++}`);
+      params.push(employee.id);
+    }
     if (start_date) { conditions.push(`a.attendance_date >= $${i++}`); params.push(start_date); }
     if (end_date) { conditions.push(`a.attendance_date <= $${i++}`); params.push(end_date); }
-    if (emp_id) { conditions.push(`a.emp_id = $${i++}`); params.push(Number(emp_id)); }
+    if (emp_id && req.user.role !== ROLES.EMPLOYEE) { conditions.push(`a.emp_id = $${i++}`); params.push(Number(emp_id)); }
 
     const { rows } = await query(
       `SELECT a.*, e.emp_code, e.emp_name FROM attendance_records a

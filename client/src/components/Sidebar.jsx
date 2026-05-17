@@ -1,14 +1,15 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, CalendarDays, Building2,
-  Clock, Palmtree, FileBarChart, Settings, ArrowLeftRight, Eye, Plane, UserCircle,
+  Clock, Palmtree, FileBarChart, Settings, ArrowLeftRight, Eye, Plane, UserCircle, CalendarCheck,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { isStaff } from '../lib/auth';
 
 const allLinks = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard', staffOnly: true },
+  { to: '/', icon: LayoutDashboard, label: 'Dashboard', staffOnly: false },
+  { to: '/attendance', icon: CalendarCheck, label: 'Attendance', employeeOnly: true },
   { to: '/manage-roster', icon: Calendar, label: 'Manage Roster', staffOnly: true },
   { to: '/view-roster', icon: Eye, label: 'View Roster', staffOnly: false },
   { to: '/actual-roster', icon: CalendarDays, label: 'Actual Roster', staffOnly: true },
@@ -26,7 +27,11 @@ const allLinks = [
 export default function Sidebar({ collapsed }) {
   const { user } = useAuth();
   const staff = isStaff(user?.role);
-  const links = allLinks.filter((l) => staff || !l.staffOnly);
+  const links = allLinks.filter((l) => {
+    if (l.staffOnly && !staff) return false;
+    if (l.employeeOnly && staff) return false;
+    return true;
+  });
 
   return (
     <aside
@@ -42,7 +47,7 @@ export default function Sidebar({ collapsed }) {
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
         {links.map(({ to, icon: Icon, label }) => (
           <NavLink
-            key={to}
+            key={label}
             to={to}
             end={to === '/'}
             className={({ isActive }) =>

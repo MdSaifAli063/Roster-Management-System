@@ -16,6 +16,8 @@ const reportRoutes = require('./routes/reports');
 const assignmentRoutes = require('./routes/assignments');
 const attendanceRoutes = require('./routes/attendance');
 const leaveRoutes = require('./routes/leave');
+const dashboardRoutes = require('./routes/dashboard');
+const calendarRoutes = require('./routes/calendar');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,6 +46,8 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/leave', leaveRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/calendar', calendarRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

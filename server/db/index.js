@@ -1,6 +1,9 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+// Return DATE columns as YYYY-MM-DD strings (avoids timezone shifts in calendars)
+types.setTypeParser(1082, (val) => val);
 
 function getPoolConfig() {
   const connectionString = process.env.DATABASE_URL;

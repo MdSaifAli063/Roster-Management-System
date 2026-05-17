@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS employees (
   emp_code VARCHAR(20) UNIQUE NOT NULL,
   emp_name VARCHAR(100) NOT NULL,
   email VARCHAR(100),
+  user_id INT REFERENCES users(id),
   function VARCHAR(50),
   role VARCHAR(100),
   grade VARCHAR(10),

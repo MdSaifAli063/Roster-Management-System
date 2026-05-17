@@ -31,12 +31,20 @@ export default function Layout() {
               <Menu className="h-5 w-5" />
             </button>
             <nav className="hidden gap-4 text-sm font-medium text-slate-600 md:flex dark:text-slate-400">
-              {[
-                { label: 'People', to: '/employees' },
-                { label: 'Leave', to: '/leave' },
-                { label: 'Attendance', to: '/actual-roster' },
-                { label: 'Reports', to: '/reports' },
-              ].map((item) => (
+              {(user?.role === 'EMPLOYEE'
+                ? [
+                    { label: 'Dashboard', to: '/' },
+                    { label: 'Attendance', to: '/attendance' },
+                    { label: 'My Roster', to: '/view-roster' },
+                    { label: 'Leave', to: '/leave' },
+                  ]
+                : [
+                    { label: 'People', to: '/employees' },
+                    { label: 'Leave', to: '/leave' },
+                    { label: 'Attendance', to: '/actual-roster' },
+                    { label: 'Reports', to: '/reports' },
+                  ]
+              ).map((item) => (
                 <Link key={item.label} to={item.to} className="hover:text-teal dark:hover:text-teal">
                   {item.label}
                 </Link>

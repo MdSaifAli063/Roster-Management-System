@@ -4,12 +4,15 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
+import { ROLES } from '../lib/auth';
 import { Check, X } from 'lucide-react';
 
 export default function Leave() {
   const { user } = useAuth();
+  const isEmployee = user?.role === ROLES.EMPLOYEE;
   const [requests, setRequests] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [myEmpId, setMyEmpId] = useState('');
   const [form, setForm] = useState({
     emp_id: '',
     start_date: '',
@@ -22,8 +25,17 @@ export default function Leave() {
   const load = () => api.get('/leave').then((r) => setRequests(r.data));
   useEffect(() => {
     load();
-    api.get('/employees').then((r) => setEmployees(r.data));
-  }, []);
+    if (isEmployee) {
+      api.get('/dashboard/employee').then((r) => {
+        if (r.data.linked && r.data.employee) {
+          setMyEmpId(String(r.data.employee.id));
+          setForm((f) => ({ ...f, emp_id: String(r.data.employee.id) }));
+        }
+      });
+    } else {
+      api.get('/employees').then((r) => setEmployees(r.data));
+    }
+  }, [isEmployee]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -41,15 +53,17 @@ export default function Leave() {
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Leave</h1>
 
-      <Card title="Submit leave request">
-        <p className="mb-4 text-sm text-slate-500">HR is notified by email when a request is submitted.</p>
+      <Card title={isEmployee ? 'Submit my leave request' : 'Submit leave request'}>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">HR is notified by email when a request is submitted.</p>
         <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-          <Select label="Employee" value={form.emp_id} onChange={(e) => setForm({ ...form, emp_id: e.target.value })} required>
-            <option value="">Select</option>
-            {employees.map((e) => (
-              <option key={e.id} value={e.id}>{e.emp_code} — {e.emp_name}</option>
-            ))}
-          </Select>
+          {!isEmployee && (
+            <Select label="Employee" value={form.emp_id} onChange={(e) => setForm({ ...form, emp_id: e.target.value })} required>
+              <option value="">Select</option>
+              {employees.map((e) => (
+                <option key={e.id} value={e.id}>{e.emp_code} — {e.emp_name}</option>
+              ))}
+            </Select>
+          )}
           <Select label="Leave type" value={form.leave_type} onChange={(e) => setForm({ ...form, leave_type: e.target.value })}>
             <option value="ANNUAL">Annual</option>
             <option value="SICK">Sick</option>
@@ -63,11 +77,11 @@ export default function Leave() {
         </form>
       </Card>
 
-      <Card title="Leave requests">
+      <Card title={isEmployee ? 'My leave requests' : 'Leave requests'}>
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b text-left text-slate-500">
-              <th className="p-2">Employee</th>
+              {!isEmployee && <th className="p-2">Employee</th>}
               <th className="p-2">Type</th>
               <th className="p-2">Dates</th>
               <th className="p-2">Status</th>
@@ -77,7 +91,7 @@ export default function Leave() {
           <tbody>
             {requests.map((r) => (
               <tr key={r.id} className="border-b dark:border-slate-800">
-                <td className="p-2">{r.emp_code} — {r.emp_name}</td>
+                {!isEmployee && <td className="p-2">{r.emp_code} — {r.emp_name}</td>}
                 <td className="p-2">{r.leave_type}</td>
                 <td className="p-2">{String(r.start_date).slice(0, 10)} – {String(r.end_date).slice(0, 10)}</td>
                 <td className="p-2">
