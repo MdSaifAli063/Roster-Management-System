@@ -47,9 +47,9 @@ async function start() {
     throw err;
   });
 
-  server.listen(PORT, () => {
-    console.log(`Roster app running at http://localhost:${PORT}`);
-    console.log(`API: http://localhost:${PORT}/api`);
+  server.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`Roster app listening on 0.0.0.0:${PORT}`);
+    console.log(`API: /api`);
   });
 }
 
