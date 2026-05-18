@@ -48,6 +48,28 @@ router.patch('/read-all', async (req, res) => {
   }
 });
 
+router.delete('/clear-all', async (req, res) => {
+  try {
+    await query(`DELETE FROM user_notifications WHERE user_id = $1`, [req.user.id]);
+    res.json({ message: 'All notifications cleared' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to clear notifications' });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  try {
+    const { rowCount } = await query(
+      `DELETE FROM user_notifications WHERE id = $1 AND user_id = $2`,
+      [req.params.id, req.user.id]
+    );
+    if (!rowCount) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: 'Notification cleared' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to clear notification' });
+  }
+});
+
 router.patch('/:id/read', async (req, res) => {
   try {
     const { rows } = await query(
