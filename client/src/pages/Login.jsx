@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
@@ -63,6 +63,9 @@ export default function Login() {
 
       <div className="flex flex-1 items-center justify-center p-6 sm:p-8">
         <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-lg dark:border-slate-800 dark:bg-slate-900">
+          <Link to="/" className="mb-4 inline-flex items-center text-sm font-medium text-teal hover:underline">
+            ← Back to home
+          </Link>
           <div className="mb-6 lg:hidden">
             <Calendar className="mb-2 h-10 w-10 text-teal" />
             <h2 className="font-display text-2xl font-bold text-navy dark:text-white">RosterPro</h2>
