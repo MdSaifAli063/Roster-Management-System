@@ -61,7 +61,7 @@ export default function ManageRoster() {
           state: { empIds: [...selected], startDate, endDate },
         });
       } else {
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (err) {
       alert(err.response?.data?.error || 'Generation failed');
@@ -131,7 +131,7 @@ export default function ManageRoster() {
             <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
             <Button variant="teal" disabled={loading} onClick={() => generate(true)}>Submit and View Roster</Button>
             <Button variant="primary" disabled={loading} onClick={() => generate(false)}>Submit and Exit</Button>
-            <Button variant="ghost" onClick={() => navigate('/')}>Exit without Saving</Button>
+            <Button variant="ghost" onClick={() => navigate('/dashboard')}>Exit without Saving</Button>
           </div>
         </Card>
       )}
