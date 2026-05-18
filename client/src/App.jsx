@@ -5,6 +5,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import StaffRoute from './components/StaffRoute';
 import Layout from './components/Layout';
+import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ManageRoster from './pages/ManageRoster';
@@ -32,6 +33,7 @@ export default function App() {
         <NotificationProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route
               element={
@@ -40,7 +42,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Dashboard />} />
               <Route path="manage-roster" element={<Staff><ManageRoster /></Staff>} />
               <Route path="view-roster" element={<ViewRoster />} />
               <Route path="actual-roster" element={<Staff><ActualRoster /></Staff>} />
