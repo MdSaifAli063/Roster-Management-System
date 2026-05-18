@@ -64,12 +64,10 @@ export default function Profile() {
       </Card>
 
       <div className="flex flex-wrap gap-3">
-        <Link to="/settings">
-          <Button variant="secondary">
-            <Settings className="h-4 w-4" />
-            App settings
-          </Button>
-        </Link>
+        <Button as={Link} to="/settings" variant="secondary">
+          <Settings className="h-4 w-4" />
+          App settings
+        </Button>
       </div>
     </div>
   );

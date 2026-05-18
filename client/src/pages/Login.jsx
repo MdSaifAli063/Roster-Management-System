@@ -52,7 +52,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+    <div className="flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden bg-slate-50 dark:bg-slate-950 lg:flex-row">
       <div className="hidden flex-1 flex-col justify-center bg-navy p-12 text-white lg:flex">
         <Calendar className="mb-6 h-12 w-12 text-teal" />
         <h1 className="font-display text-4xl font-bold">Roster Management</h1>
@@ -61,8 +61,8 @@ export default function Login() {
         </p>
       </div>
 
-      <div className="flex flex-1 items-center justify-center p-6 sm:p-8">
-        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-lg dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-1 items-center justify-center p-4 sm:p-6 md:p-8">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-lg sm:p-8 dark:border-slate-800 dark:bg-slate-900">
           <Link to="/" className="mb-4 inline-flex items-center text-sm font-medium text-teal hover:underline">
             ← Back to home
           </Link>
