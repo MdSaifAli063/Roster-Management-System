@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { isStaff } from '../lib/auth';
 
 const allLinks = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard', staffOnly: false },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', staffOnly: false },
   { to: '/attendance', icon: CalendarCheck, label: 'Attendance', employeeOnly: true },
   { to: '/manage-roster', icon: Calendar, label: 'Manage Roster', staffOnly: true },
   { to: '/view-roster', icon: Eye, label: 'View Roster', staffOnly: false },
@@ -49,7 +49,7 @@ export default function Sidebar({ collapsed }) {
           <NavLink
             key={label}
             to={to}
-            end={to === '/'}
+            end={to === '/dashboard'}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
