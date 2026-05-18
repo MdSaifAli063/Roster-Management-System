@@ -19,9 +19,11 @@ function getPoolConfig() {
 
   const conn = connectionString.trim();
   const isLocalHost = /@(localhost|127\.0\.0\.1)(:\d+)?\//i.test(conn);
+  const isCloudSqlSocket = conn.includes('/cloudsql/');
 
   const useSsl =
     !isLocalHost &&
+    !isCloudSqlSocket &&
     (process.env.DATABASE_SSL === 'true' ||
       /neon\.tech|supabase\.co|render\.com/i.test(conn));
 
