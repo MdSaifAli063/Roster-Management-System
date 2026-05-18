@@ -1,0 +1,12 @@
+node_modules
+client/node_modules
+server/node_modules
+client/dist
+.git
+.env
+.env.*
+!.env.gcp.example
+*.log
+.DS_Store
+.cursor
+terminals
