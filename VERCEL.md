@@ -21,10 +21,12 @@ Complete [DEPLOY.md](./DEPLOY.md) sections **1** and **2** first:
 1. [vercel.com/new](https://vercel.com/new) → import your Git repository.
 2. Choose **one** setup:
 
-| Option | Root Directory | Config file used |
-|--------|----------------|------------------|
-| **A (recommended)** | `client` | `client/vercel.json` |
-| **B** | *(leave empty / repo root)* | `vercel.json` at repo root |
+| Option | Root Directory | Notes |
+|--------|----------------|--------|
+| **A (recommended)** | `client` | Uses `client/vercel.json`; simplest |
+| **B** | *(repo root)* | Uses root `vercel.json` + `postinstall` installs `client/` |
+
+If the build log shows `npm run build --prefix client` but fails with **vite not found**, push the latest repo (Vite is in `dependencies`) or set Root Directory to **`client`**.
 
 3. Framework: **Vite** (auto-detected).
 4. Build settings should match `vercel.json` (no override needed).

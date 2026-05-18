@@ -3,9 +3,11 @@
   "private": true,
   "description": "Roster Management — single-server app",
   "scripts": {
+    "postinstall": "npm install --prefix client --include=dev",
     "install:all": "npm install --prefix server && npm install --prefix client",
     "dev": "npm run dev --prefix server",
     "build": "npm run build --prefix client",
+    "vercel-build": "npm run build --prefix client",
     "start": "npm run build && npm run start --prefix server",
     "db:migrate": "npm run db:migrate --prefix server",
     "db:seed": "npm run db:seed --prefix server"
