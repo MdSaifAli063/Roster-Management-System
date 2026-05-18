@@ -1,15 +1,26 @@
 {
   "name": "roster-app",
   "private": true,
-  "description": "Roster Management — single-server app",
+  "description": "Roster Management — Vercel (frontend + API) or local single-server",
   "scripts": {
     "postinstall": "npm install --prefix client --include=dev",
     "install:all": "npm install --prefix server && npm install --prefix client",
     "dev": "npm run dev --prefix server",
     "build": "npm run build --prefix client",
-    "vercel-build": "npm run build --prefix client",
+    "vercel-build": "npm install --prefix server && npm run build --prefix client",
     "start": "npm run build && npm run start --prefix server",
     "db:migrate": "npm run db:migrate --prefix server",
     "db:seed": "npm run db:seed --prefix server"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^8.0.7",
+    "pg": "^8.16.0",
+    "xlsx": "^0.18.5"
   }
 }

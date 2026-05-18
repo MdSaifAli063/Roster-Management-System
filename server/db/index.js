@@ -15,9 +15,20 @@ function getPoolConfig() {
     );
   }
 
+  const conn = connectionString.trim();
+  const isLocalHost = /@(localhost|127\.0\.0\.1)(:\d+)?\//i.test(conn);
+
+  // Local Postgres does not use SSL; cloud URLs (Neon, etc.) need it
+  const useSsl =
+    !isLocalHost &&
+    (process.env.DATABASE_SSL === 'true' ||
+      /neon\.tech|supabase\.co|render\.com/i.test(conn));
+
   const config = {
-    connectionString: connectionString.trim(),
-    ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+    connectionString: conn,
+    ssl: useSsl ? { rejectUnauthorized: false } : false,
+    max: process.env.VERCEL ? 1 : 10,
+    idleTimeoutMillis: process.env.VERCEL ? 10000 : 30000,
   };
 
   // Avoid SCRAM error when password is missing from a malformed URL

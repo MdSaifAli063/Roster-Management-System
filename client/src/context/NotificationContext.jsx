@@ -1,8 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
 import api from '../api/client';
-import { getSocketUrl } from '../lib/apiConfig';
+
+const POLL_MS = Number(import.meta.env.VITE_NOTIFICATION_POLL_MS) || 20000;
 
 const NotificationContext = createContext(null);
 
@@ -11,7 +11,6 @@ export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [connected, setConnected] = useState(false);
-  const socketRef = useRef(null);
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -22,52 +21,38 @@ export function NotificationProvider({ children }) {
       ]);
       setNotifications(listRes.data);
       setUnreadCount(countRes.data.count || 0);
+      setConnected(true);
     } catch {
-      /* ignore */
+      setConnected(false);
     }
   }, [user]);
-
-  const addNotification = useCallback((n) => {
-    setNotifications((prev) => {
-      if (prev.some((x) => x.id === n.id)) return prev;
-      return [n, ...prev].slice(0, 50);
-    });
-    if (!n.is_read) {
-      setUnreadCount((c) => c + 1);
-    }
-  }, []);
 
   useEffect(() => {
     if (authLoading || !user) {
       setNotifications([]);
       setUnreadCount(0);
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
       setConnected(false);
       return;
     }
 
     refresh();
 
-    const token = localStorage.getItem('token');
-    const socket = io(getSocketUrl(), {
-      path: '/socket.io',
-      auth: { token },
-      transports: ['websocket', 'polling'],
-    });
-    socketRef.current = socket;
+    const interval = setInterval(refresh, POLL_MS);
 
-    socket.on('connect', () => setConnected(true));
-    socket.on('disconnect', () => setConnected(false));
-    socket.on('notification', (payload) => addNotification(payload));
+    const onFocus = () => refresh();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
-      socket.disconnect();
-      socketRef.current = null;
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [user, authLoading, refresh, addNotification]);
+  }, [user, authLoading, refresh]);
 
   const markRead = async (id) => {
     await api.patch(`/notifications/${id}/read`);
@@ -111,7 +96,6 @@ export function NotificationProvider({ children }) {
         markAllRead,
         clearNotification,
         clearAllNotifications,
-        addNotification,
       }}
     >
       {children}

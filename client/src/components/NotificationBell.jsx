@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, Trash2, Wifi, WifiOff, X } from 'lucide-react';
+import { Bell, Check, RefreshCw, Trash2, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNotifications } from '../context/NotificationContext';
 import { cn } from '../lib/utils';
@@ -87,11 +87,13 @@ export default function NotificationBell() {
             <div className="flex items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <h3 className="truncate font-display font-semibold text-navy dark:text-white">Notifications</h3>
-                {connected ? (
-                  <Wifi className="h-3.5 w-3.5 shrink-0 text-green-500" title="Live" />
-                ) : (
-                  <WifiOff className="h-3.5 w-3.5 shrink-0 text-slate-400" title="Reconnecting…" />
+              <RefreshCw
+                className={cn(
+                  'h-3.5 w-3.5 shrink-0',
+                  connected ? 'text-green-500' : 'text-slate-400'
                 )}
+                title={connected ? 'Auto-refresh on' : 'Checking…'}
+              />
               </div>
             </div>
             {notifications.length > 0 && (

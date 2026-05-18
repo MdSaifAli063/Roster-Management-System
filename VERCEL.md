@@ -1,69 +1,103 @@
-# Deploy frontend on Vercel
+# Deploy on Vercel + Neon (all-in-one)
 
-RosterPro uses a **split deploy**: Vercel hosts the React app; **Render** (or similar) hosts the Express API + WebSockets; **Neon** hosts PostgreSQL.
+One Vercel project serves:
 
-You cannot run the full app on Vercel alone (no long-lived Socket.IO / single Express server on the free tier).
+- **React app** → static files from `client/dist`
+- **Express API** → serverless function at `/api/*`
+- **PostgreSQL** → [Neon](https://neon.tech) (external, free tier)
+
+Real-time Socket.IO is **disabled**; notifications refresh every ~20 seconds (polling).
 
 ---
 
-## Checklist
+## 1. Neon database
 
-### 1. Database (Neon) + API (Render)
+1. Create a project at [neon.tech](https://neon.tech).
+2. Copy the connection string (include `?sslmode=require`).
+3. On your PC (once):
 
-Complete [DEPLOY.md](./DEPLOY.md) sections **1** and **2** first:
-
-- Neon `DATABASE_URL`, run `npm run db:migrate` and `npm run db:seed` in `server/`
-- Render web service from `server/` with health check `/api/health`
-- Note your API URL, e.g. `https://roster-api.onrender.com`
-
-### 2. Import repo on Vercel
-
-1. [vercel.com/new](https://vercel.com/new) → import your Git repository.
-2. Choose **one** setup:
-
-| Option | Root Directory | Notes |
-|--------|----------------|--------|
-| **A (recommended)** | `client` | Uses `client/vercel.json`; simplest |
-| **B** | *(repo root)* | Uses root `vercel.json` + `postinstall` installs `client/` |
-
-If the build log shows `npm run build --prefix client` but fails with **vite not found**, push the latest repo (Vite is in `dependencies`) or set Root Directory to **`client`**.
-
-3. Framework: **Vite** (auto-detected).
-4. Build settings should match `vercel.json` (no override needed).
-
-### 3. Environment variables (Vercel → Project → Settings → Environment Variables)
-
-| Name | Example | Required |
-|------|---------|----------|
-| `VITE_API_URL` | `https://roster-api.onrender.com/api` | **Yes** |
-| `VITE_SOCKET_URL` | `https://roster-api.onrender.com` | Optional (auto-derived from `VITE_API_URL`) |
-
-Apply to **Production** and **Preview** if previews should hit the same API.
-
-Redeploy after changing env vars (Vite bakes them in at build time).
-
-### 4. Point Render CORS at Vercel
-
-On Render, set `CLIENT_URL` to your Vercel URL(s), no trailing slash:
-
-```env
-CLIENT_URL=https://roster-pro.vercel.app
+```powershell
+cd "d:\Roster Website\server"
+copy .env.example .env
+# Paste DATABASE_URL and JWT_SECRET into .env
+npm install
+npm run db:migrate
+npm run db:seed
 ```
 
-For preview branches, add comma-separated URLs:
+---
 
-```env
-CLIENT_URL=https://roster-pro.vercel.app,https://roster-pro-git-main-you.vercel.app
+## 2. Vercel project
+
+1. Push this repo to GitHub.
+2. [vercel.com/new](https://vercel.com/new) → Import repo.
+3. **Root Directory:** leave empty (repo root). Uses root `vercel.json`.
+4. **Environment variables** — add from [`.env.vercel.example`](./.env.vercel.example):
+
+| Variable | Required | Example |
+|----------|----------|---------|
+| `DATABASE_URL` | Yes | `postgresql://...@ep-xxx.neon.tech/neondb?sslmode=require` |
+| `DATABASE_SSL` | Yes | `true` |
+| `JWT_SECRET` | Yes | long random string |
+| `EMAIL_ENABLED` | No | `false` |
+| `VITE_API_URL` | **No** | Leave unset — API is same domain `/api` |
+
+5. Deploy.
+
+---
+
+## 3. Verify
+
+| Check | Expected |
+|-------|----------|
+| `https://YOUR-APP.vercel.app/api/health` | `{"status":"ok"}` |
+| Login / Sign up | Works (no 405) |
+| Bell icon | Green refresh icon; updates within ~20s |
+
+---
+
+## 4. Custom domain (optional)
+
+1. Vercel → Domains → add your domain.
+2. Set env var: `CLIENT_URL=https://yourdomain.com`
+3. Redeploy.
+
+---
+
+## Local development
+
+Still use one local server (optional Socket.IO):
+
+```powershell
+npm run install:all
+cd server
+# .env with local DATABASE_URL
+npm run dev
 ```
 
-Redeploy the Render service after updating.
+Open `http://localhost:5000`.
 
-### 5. Verify
+To disable Socket.IO locally: `ENABLE_SOCKET=false` in `server/.env`.
 
-1. `https://your-api.onrender.com/api/health` → `{"status":"ok"}`
-2. Open your Vercel URL → Sign in (`admin@roster.com` / `admin123` after seed)
-3. Bell icon → live dot (green) when Socket.IO connects to Render
-4. Leave / attendance → notifications should appear in real time
+Separate Vite dev server:
+
+```powershell
+cd client && npm run dev
+```
+
+Proxies `/api` → `localhost:5000`.
+
+---
+
+## Legacy: Vercel frontend + Render API
+
+If you prefer split deploy, set on Vercel:
+
+```env
+VITE_API_URL=https://your-api.onrender.com/api
+```
+
+And deploy API on Render per [DEPLOY.md](./DEPLOY.md).
 
 ---
 
@@ -71,29 +105,8 @@ Redeploy the Render service after updating.
 
 | Issue | Fix |
 |-------|-----|
-| Login fails / network error | Set `VITE_API_URL` with `/api` suffix; redeploy Vercel |
-| CORS error in browser | Add exact Vercel URL to Render `CLIENT_URL` |
-| Notifications never “live” | Set `VITE_API_URL` to full `https://...` URL; check Render logs |
-| 404 on refresh (e.g. `/dashboard`) | `vercel.json` SPA rewrite should be present; redeploy |
-| API sleeps (Render free) | First request may take ~30s; upgrade or use cron ping |
-
----
-
-## Custom domain
-
-1. Vercel → Domains → add `app.yourcompany.com`
-2. Add the same URL to Render `CLIENT_URL`
-3. No code changes required
-
----
-
-## Local dev (unchanged)
-
-```bash
-npm run install:all
-npm run dev
-```
-
-Open `http://localhost:5000` — no `VITE_*` vars needed.
-
-Optional: `cd client && npm run dev` uses Vite proxy to `localhost:5000` for `/api` and `/socket.io`.
+| `/api/health` 404 | Root Directory must be repo root; `api/index.js` must exist |
+| 500 on API | Check Neon `DATABASE_URL`, run migrations |
+| Signup 405 | Redeploy latest code; do not set wrong `VITE_API_URL` |
+| Cold start slow | First request after idle may take a few seconds (serverless) |
+| Notifications delayed | Normal — polling every 20s; lower `VITE_NOTIFICATION_POLL_MS` |

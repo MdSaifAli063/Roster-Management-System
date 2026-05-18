@@ -84,16 +84,14 @@ cd client && npm run dev   # http://localhost:5173 with API proxy
 
 | Guide | Contents |
 |-------|----------|
-| **[VERCEL.md](./VERCEL.md)** | Vercel frontend deploy (env vars, CORS, verify) |
-| **[DEPLOY.md](./DEPLOY.md)** | Full stack: Neon + Render + Vercel |
+| **[VERCEL.md](./VERCEL.md)** | **Recommended:** Vercel + Neon (frontend + API, polling notifications) |
+| **[DEPLOY.md](./DEPLOY.md)** | Alternative: Neon + Render API + Vercel frontend |
 
 | Service | Use |
 |---------|-----|
 | Neon | PostgreSQL (`DATABASE_SSL=true`) |
-| Render | `server/` API (`render.yaml` included) |
-| Vercel | `client/` frontend (`vercel.json` included) |
-
-On Vercel set `VITE_API_URL=https://your-api.onrender.com/api` and add your Vercel URL to Render `CLIENT_URL`.
+| Vercel | React + Express API (`api/index.js` + `vercel.json`) |
+| Render | Optional split API (`render.yaml`) + live Socket.IO |
 
 ### Email (optional)
 

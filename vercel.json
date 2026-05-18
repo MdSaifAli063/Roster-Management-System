@@ -1,11 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install --prefix client --include=dev",
-  "buildCommand": "npm run build --prefix client",
+  "installCommand": "npm install && npm install --prefix server && npm install --prefix client --include=dev",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "client/dist",
-  "framework": "vite",
+  "framework": null,
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  },
   "rewrites": [
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/((?!api/)(?!assets/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
