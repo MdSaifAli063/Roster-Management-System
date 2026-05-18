@@ -16,7 +16,7 @@ export function isStaff(role) {
 }
 
 export function getHomePath() {
-  return '/';
+  return '/dashboard';
 }
 
 export function getRoleLabel(role) {
