@@ -84,8 +84,9 @@ cd client && npm run dev   # http://localhost:5173 with API proxy
 
 | Guide | Contents |
 |-------|----------|
-| **[VERCEL.md](./VERCEL.md)** | **Recommended:** Vercel + Neon (frontend + API, polling notifications) |
-| **[DEPLOY.md](./DEPLOY.md)** | Alternative: Neon + Render API + Vercel frontend |
+| **[DEPLOY-GCP.md](./DEPLOY-GCP.md)** | **Recommended:** Google Cloud Run — frontend + API in one URL |
+| **[VERCEL.md](./VERCEL.md)** | Vercel + Neon (serverless API) |
+| **[DEPLOY.md](./DEPLOY.md)** | Neon + Render API + Vercel frontend |
 
 | Service | Use |
 |---------|-----|
