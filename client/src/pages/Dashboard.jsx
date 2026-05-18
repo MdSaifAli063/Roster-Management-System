@@ -174,30 +174,37 @@ export default function Dashboard() {
       ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Dashboard</h1>
-          <p className="text-slate-500 dark:text-slate-400">
-            {employeeMode && empData?.employee
-              ? `${empData.employee.emp_name} · ${empData.employee.emp_code} · ${format(today, 'EEEE, d MMMM yyyy')}`
-              : format(today, 'EEEE, d MMMM yyyy')}
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="font-display text-xl font-bold text-navy sm:text-2xl dark:text-white">Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-500 sm:text-base dark:text-slate-400">
+            {employeeMode && empData?.employee ? (
+              <>
+                <span className="block truncate font-medium text-slate-700 dark:text-slate-300">
+                  {empData.employee.emp_name} · {empData.employee.emp_code}
+                </span>
+                <span>{format(today, 'EEEE, d MMMM yyyy')}</span>
+              </>
+            ) : (
+              format(today, 'EEEE, d MMMM yyyy')
+            )}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           {employeeMode ? (
             <>
-              <Link to="/attendance">
-                <Button variant="teal"><CalendarCheck className="h-4 w-4" /> Attendance</Button>
-              </Link>
-              <Link to="/view-roster">
-                <Button variant="secondary"><Eye className="h-4 w-4" /> My Roster</Button>
-              </Link>
+              <Button as={Link} to="/attendance" variant="teal" className="min-h-11 w-full sm:w-auto">
+                <CalendarCheck className="h-4 w-4" /> Attendance
+              </Button>
+              <Button as={Link} to="/view-roster" variant="secondary" className="min-h-11 w-full sm:w-auto">
+                <Eye className="h-4 w-4" /> My Roster
+              </Button>
             </>
           ) : (
-            <Link to="/actual-roster">
-              <Button variant="teal"><CalendarCheck className="h-4 w-4" /> Attendance Today</Button>
-            </Link>
+            <Button as={Link} to="/actual-roster" variant="teal" className="min-h-11 w-full sm:w-auto">
+              <CalendarCheck className="h-4 w-4" /> Attendance Today
+            </Button>
           )}
         </div>
       </div>
@@ -214,8 +221,8 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
-          <div className="grid gap-6 lg:grid-cols-3">
-            <Card title="Calendar" className="lg:col-span-1">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-3">
+            <Card title="Calendar" className="xl:col-span-1">
               <MonthCalendar
                 year={viewYear}
                 month={viewMonth}
@@ -231,7 +238,7 @@ export default function Dashboard() {
               </p>
             </Card>
 
-            <Card title="Need to Act" className="lg:col-span-1">
+            <Card title="Need to Act" className="xl:col-span-1">
               <ul className="space-y-3">
                 {tasks.map((t) => (
                   <li key={t.title}>
@@ -246,7 +253,7 @@ export default function Dashboard() {
               </ul>
             </Card>
 
-            <Card title="Upcoming — holidays & events" className="lg:col-span-1">
+            <Card title="Upcoming — holidays & events" className="xl:col-span-1">
               <ul className="space-y-3">
                 {events.length === 0 ? (
                   <li className="text-sm text-slate-500">No upcoming holidays this month.</li>
@@ -264,17 +271,17 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {statCards.map((s) => (
-              <Link key={s.label} to={s.to}>
-                <Card className="transition hover:shadow-md">
-                  <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-teal/10 p-3">
-                      <s.icon className="h-6 w-6 text-teal" />
+              <Link key={s.label} to={s.to} className="min-w-0">
+                <Card className="h-full transition hover:shadow-md">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                    <div className="w-fit rounded-lg bg-teal/10 p-2.5 sm:p-3">
+                      <s.icon className="h-5 w-5 text-teal sm:h-6 sm:w-6" />
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold text-navy dark:text-white">{s.value}</p>
-                      <p className="text-sm text-slate-500">{s.label}</p>
+                    <div className="min-w-0">
+                      <p className="text-xl font-bold text-navy sm:text-2xl dark:text-white">{s.value}</p>
+                      <p className="text-xs leading-snug text-slate-500 sm:text-sm">{s.label}</p>
                     </div>
                   </div>
                 </Card>

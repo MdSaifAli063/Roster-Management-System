@@ -82,6 +82,23 @@ export function NotificationProvider({ children }) {
     setUnreadCount(0);
   };
 
+  const clearNotification = async (id) => {
+    await api.delete(`/notifications/${id}`);
+    setNotifications((prev) => {
+      const removed = prev.find((n) => n.id === id);
+      if (removed && !removed.is_read) {
+        setUnreadCount((c) => Math.max(0, c - 1));
+      }
+      return prev.filter((n) => n.id !== id);
+    });
+  };
+
+  const clearAllNotifications = async () => {
+    await api.delete('/notifications/clear-all');
+    setNotifications([]);
+    setUnreadCount(0);
+  };
+
   return (
     <NotificationContext.Provider
       value={{
@@ -91,6 +108,8 @@ export function NotificationProvider({ children }) {
         refresh,
         markRead,
         markAllRead,
+        clearNotification,
+        clearAllNotifications,
         addNotification,
       }}
     >
