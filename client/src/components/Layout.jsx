@@ -34,7 +34,7 @@ export default function Layout() {
             <nav className="hidden gap-4 text-sm font-medium text-slate-600 md:flex dark:text-slate-400">
               {(user?.role === 'EMPLOYEE'
                 ? [
-                    { label: 'Dashboard', to: '/' },
+                    { label: 'Dashboard', to: '/dashboard' },
                     { label: 'Attendance', to: '/attendance' },
                     { label: 'My Roster', to: '/view-roster' },
                     { label: 'Leave', to: '/leave' },
