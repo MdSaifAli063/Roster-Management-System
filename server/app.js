@@ -1,9 +1,9 @@
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const { loadEnv } = require('./loadEnv');
 
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+loadEnv();
 
 const authRoutes = require('./routes/auth');
 const employeeRoutes = require('./routes/employees');
@@ -66,9 +66,16 @@ function createApp() {
   app.use('/api/calendar', calendarRoutes);
   app.use('/api/notifications', notificationRoutes);
 
-  app.use((err, _req, res, _next) => {
+  app.use((err, req, res, _next) => {
     console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    const status = err.status || err.statusCode || 500;
+    if (status === 400) {
+      return res.status(400).json({ error: 'Invalid request. Send JSON with email and password.' });
+    }
+    const isDev = process.env.NODE_ENV !== 'production';
+    res.status(status >= 400 && status < 600 ? status : 500).json({
+      error: isDev && status >= 500 ? err.message : 'Internal server error',
+    });
   });
 
   return app;

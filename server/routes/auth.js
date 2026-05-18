@@ -9,9 +9,13 @@ const { resolveEmployeeForUser } = require('../services/employeeLink');
 const router = express.Router();
 
 function signToken(user) {
+  const secret = process.env.JWT_SECRET;
+  if (!secret?.trim()) {
+    throw new Error('JWT_SECRET is not configured on the server');
+  }
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role, name: user.name },
-    process.env.JWT_SECRET,
+    secret,
     { expiresIn: '7d' }
   );
 }
@@ -90,8 +94,10 @@ router.post('/login', async (req, res) => {
     const token = signToken(user);
     res.json({ token, user: publicUser(user) });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Login failed' });
+    console.error('Login error:', err);
+    res.status(500).json({
+      error: process.env.NODE_ENV !== 'production' ? err.message : 'Login failed',
+    });
   }
 });
 

@@ -39,7 +39,7 @@ export default function Login() {
       const user = await login(email, password);
       navigate(getHomePath(user.role));
     } catch (err) {
-      setError(authErrorMessage(err) || 'Invalid email or password');
+      setError(authErrorMessage(err));
     } finally {
       setLoading(false);
     }
