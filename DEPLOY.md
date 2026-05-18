@@ -56,15 +56,20 @@ Run migrations against Neon if you have not already (step 1).
 
 ## 3. Frontend on Vercel
 
-1. [vercel.com](https://vercel.com) → Import Git repo.
-2. Set **Root Directory** to `client`.
-3. Environment variable:
+See **[VERCEL.md](./VERCEL.md)** for the full checklist.
+
+Quick steps:
+
+1. [vercel.com/new](https://vercel.com/new) → Import Git repo.
+2. **Root Directory:** `client` (or leave repo root — uses `/vercel.json`).
+3. Environment variables (Production + Preview):
 
 | Variable | Value |
 |----------|--------|
 | `VITE_API_URL` | `https://roster-api.onrender.com/api` |
+| `VITE_SOCKET_URL` | `https://roster-api.onrender.com` *(optional — derived from API URL)* |
 
-4. Deploy. Update Render `CLIENT_URL` to your Vercel URL (include `https://`, no trailing slash).
+4. Deploy. On Render, set `CLIENT_URL` to your Vercel URL (include `https://`, no trailing slash).
 
 For preview deployments, add preview URLs to `CLIENT_URL` comma-separated:
 

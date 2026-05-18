@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import api from '../api/client';
+import { getSocketUrl } from '../lib/apiConfig';
 
 const NotificationContext = createContext(null);
 
@@ -51,7 +52,7 @@ export function NotificationProvider({ children }) {
     refresh();
 
     const token = localStorage.getItem('token');
-    const socket = io(window.location.origin, {
+    const socket = io(getSocketUrl(), {
       path: '/socket.io',
       auth: { token },
       transports: ['websocket', 'polling'],
