@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, CalendarDays, Building2,
-  Clock, Palmtree, FileBarChart, Settings, ArrowLeftRight, Eye, Plane, UserCircle, CalendarCheck,
+  Clock, Palmtree, FileBarChart, Settings, ArrowLeftRight, Eye, Plane, UserCircle, CalendarCheck, X,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
@@ -24,7 +24,7 @@ const allLinks = [
   { to: '/settings', icon: Settings, label: 'Settings', staffOnly: false },
 ];
 
-export default function Sidebar({ collapsed }) {
+export default function Sidebar({ collapsed, mobileOpen, onMobileClose }) {
   const { user } = useAuth();
   const staff = isStaff(user?.role);
   const links = allLinks.filter((l) => {
@@ -33,35 +33,63 @@ export default function Sidebar({ collapsed }) {
     return true;
   });
 
+  const showLabels = mobileOpen || !collapsed;
+
   return (
-    <aside
-      className={cn(
-        'flex h-full flex-col border-r border-slate-200 bg-navy text-white transition-all dark:border-slate-800',
-        collapsed ? 'w-16' : 'w-64'
-      )}
-    >
-      <div className="flex h-16 items-center gap-2 border-b border-white/10 px-4">
-        <Calendar className="h-7 w-7 shrink-0 text-teal" />
-        {!collapsed && <span className="font-display text-lg font-semibold">RosterPro</span>}
-      </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {links.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={label}
-            to={to}
-            end={to === '/dashboard'}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
-                isActive ? 'bg-teal/20 text-teal' : 'text-slate-300 hover:bg-white/10 hover:text-white'
-              )
-            }
+    <>
+      <div
+        role="presentation"
+        className={cn(
+          'fixed inset-0 z-40 bg-black/50 transition-opacity lg:hidden',
+          mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+        )}
+        onClick={onMobileClose}
+        aria-hidden={!mobileOpen}
+      />
+
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex h-full flex-col border-r border-slate-200 bg-navy text-white shadow-xl transition-transform duration-300 ease-out dark:border-slate-800',
+          'w-[min(288px,88vw)] lg:relative lg:z-auto lg:shadow-none',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+          collapsed ? 'lg:w-16' : 'lg:w-64'
+        )}
+      >
+        <div className="flex h-14 items-center justify-between gap-2 border-b border-white/10 px-4 lg:h-16">
+          <div className="flex min-w-0 items-center gap-2">
+            <Calendar className="h-7 w-7 shrink-0 text-teal" />
+            {showLabels && <span className="truncate font-display text-lg font-semibold">RosterPro</span>}
+          </div>
+          <button
+            type="button"
+            className="rounded-lg p-2 text-slate-300 hover:bg-white/10 lg:hidden"
+            onClick={onMobileClose}
+            aria-label="Close menu"
           >
-            <Icon className="h-5 w-5 shrink-0" />
-            {!collapsed && <span>{label}</span>}
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {links.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={label}
+              to={to}
+              end={to === '/dashboard'}
+              onClick={onMobileClose}
+              className={({ isActive }) =>
+                cn(
+                  'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors lg:min-h-0',
+                  isActive ? 'bg-teal/20 text-teal' : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                )
+              }
+            >
+              <Icon className="h-5 w-5 shrink-0" />
+              {showLabels && <span>{label}</span>}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 }
