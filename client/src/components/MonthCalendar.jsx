@@ -14,7 +14,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Button from './ui/Button';
 import { cn } from '../lib/utils';
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS_FULL = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS_SHORT = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function dayStyle(dayInfo, date, viewMonth) {
   if (!isSameMonth(date, viewMonth)) {
@@ -82,10 +83,11 @@ export default function MonthCalendar({
         </Button>
       </div>
 
-      <div className="grid grid-cols-7 gap-0.5 text-center text-xs">
-        {WEEKDAYS.map((d) => (
-          <div key={d} className="py-1 font-medium text-slate-400">
-            {compact ? d[0] : d}
+      <div className="grid grid-cols-7 gap-1 text-center sm:gap-0.5">
+        {WEEKDAYS_FULL.map((d, i) => (
+          <div key={`${d}-${i}`} className="py-1 text-[10px] font-medium text-slate-400 sm:text-xs">
+            <span className="sm:hidden">{WEEKDAYS_SHORT[i]}</span>
+            <span className="hidden sm:inline">{compact ? d.slice(0, 1) : d}</span>
           </div>
         ))}
         {loading
@@ -106,7 +108,7 @@ export default function MonthCalendar({
                     (info?.isWeekend ? 'Weekend' : '')
                   }
                   className={cn(
-                    'aspect-square rounded text-xs transition hover:ring-1 hover:ring-teal/50',
+                    'flex min-h-[2.25rem] items-center justify-center rounded text-[11px] font-medium transition hover:ring-1 hover:ring-teal/50 sm:aspect-square sm:min-h-0 sm:text-xs',
                     dayStyle(info, date, viewMonth),
                     selected && 'ring-2 ring-navy dark:ring-teal',
                     !onSelectDate && 'cursor-default'
@@ -118,7 +120,7 @@ export default function MonthCalendar({
             })}
       </div>
 
-      <div className="flex flex-wrap gap-2 text-[10px] text-slate-500">
+      <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5 text-[10px] text-slate-500 sm:justify-start">
         <span className="flex items-center gap-1">
           <span className="h-2 w-2 rounded bg-red-200 dark:bg-red-900" /> Holiday
         </span>
