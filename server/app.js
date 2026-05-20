@@ -18,6 +18,7 @@ const leaveRoutes = require('./routes/leave');
 const dashboardRoutes = require('./routes/dashboard');
 const calendarRoutes = require('./routes/calendar');
 const notificationRoutes = require('./routes/notifications');
+const pdfExtractRoutes = require('./routes/pdfExtract');
 
 function buildCorsOptions() {
   const isProd = process.env.NODE_ENV === 'production';
@@ -65,6 +66,7 @@ function createApp() {
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api/calendar', calendarRoutes);
   app.use('/api/notifications', notificationRoutes);
+  app.use('/api/pdf-extract', pdfExtractRoutes);
 
   app.use((err, req, res, _next) => {
     console.error(err);

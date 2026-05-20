@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const { loadEnv } = require('./loadEnv');
 
 loadEnv();
@@ -7,9 +8,12 @@ const { testConnection } = require('./db');
 const app = require('./app');
 const { setupClient } = require('./setupClient');
 const { initRealtime } = require('./realtime');
+const { useHttps, getHttpsOptions } = require('./ssl');
 
 const PORT = process.env.PORT || 5000;
 const enableSocket = process.env.ENABLE_SOCKET !== 'false';
+const httpsEnabled = useHttps();
+const protocol = httpsEnabled ? 'https' : 'http';
 
 async function start() {
   try {
@@ -29,11 +33,13 @@ async function start() {
 
   await setupClient(app);
 
-  const server = http.createServer(app);
+  const server = httpsEnabled
+    ? https.createServer(getHttpsOptions(), app)
+    : http.createServer(app);
 
   if (enableSocket) {
     initRealtime(server);
-    console.log('WebSocket: /socket.io (set ENABLE_SOCKET=false to disable)');
+    console.log(`WebSocket: ${protocol}://localhost:${PORT}/socket.io`);
   }
 
   server.on('error', (err) => {
@@ -48,8 +54,12 @@ async function start() {
   });
 
   server.listen(Number(PORT), '0.0.0.0', () => {
-    console.log(`Roster app listening on 0.0.0.0:${PORT}`);
-    console.log(`API: /api`);
+    console.log(`Roster app → ${protocol}://localhost:${PORT}`);
+    console.log(`           → ${protocol}://127.0.0.1:${PORT}`);
+    console.log(`API        → ${protocol}://localhost:${PORT}/api`);
+    if (httpsEnabled) {
+      console.log('(Self-signed cert — browser may warn; click Advanced → Proceed)');
+    }
   });
 }
 
