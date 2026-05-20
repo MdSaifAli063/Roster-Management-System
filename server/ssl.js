@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const selfsigned = require('selfsigned');
 
 const CERT_DIR = path.join(__dirname, 'certs');
 const KEY_FILE = path.join(CERT_DIR, 'dev-key.pem');
@@ -11,11 +10,22 @@ function useHttps() {
 }
 
 function getHttpsOptions() {
+  if (!useHttps()) {
+    throw new Error('getHttpsOptions called but USE_HTTPS is not enabled');
+  }
+
   if (fs.existsSync(KEY_FILE) && fs.existsSync(CERT_FILE)) {
     return {
       key: fs.readFileSync(KEY_FILE),
       cert: fs.readFileSync(CERT_FILE),
     };
+  }
+
+  let selfsigned;
+  try {
+    selfsigned = require('selfsigned');
+  } catch {
+    throw new Error('Install dev dependency "selfsigned" for local HTTPS (npm install --prefix server)');
   }
 
   const attrs = [{ name: 'commonName', value: 'localhost' }];
