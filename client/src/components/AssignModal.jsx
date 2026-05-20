@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
 import Button from './ui/Button';
-import { Input, Select } from './ui/Input';
+import { Input, Select, Toggle } from './ui/Input';
 import { formatTime } from '../lib/utils';
-import { X } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+import { X, Clock } from 'lucide-react';
 
 export default function ShiftEditModal({ open, onClose, employee, date, cell, onSaved }) {
   const [shifts, setShifts] = useState([]);
-  const [status, setStatus] = useState('W');
+  const [working, setWorking] = useState(true);
   const [shiftId, setShiftId] = useState('');
   const [shiftStart, setShiftStart] = useState('');
   const [shiftEnd, setShiftEnd] = useState('');
   const [mandStart, setMandStart] = useState('');
   const [mandEnd, setMandEnd] = useState('');
   const [saving, setSaving] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     api.get('/shifts').then((r) => setShifts(r.data));
@@ -21,7 +23,8 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
 
   useEffect(() => {
     if (!open) return;
-    setStatus(cell?.status || 'W');
+    const st = cell?.status || 'W';
+    setWorking(st === 'W');
     setShiftId(cell?.shift_id ? String(cell.shift_id) : '');
     setShiftStart(formatTime(cell?.shift_start) || '09:00');
     setShiftEnd(formatTime(cell?.shift_end) || '18:00');
@@ -43,6 +46,7 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    const status = working ? 'W' : 'WO';
     try {
       const payload = {
         status,
@@ -53,10 +57,11 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
         mandatory_end: status === 'W' ? mandEnd : null,
       };
       await api.put(`/rosters/cell/${employee.id}/${date}`, payload);
+      toast?.success('Shift saved successfully');
       onSaved?.();
       onClose();
     } catch (err) {
-      alert(err.response?.data?.error || 'Save failed');
+      toast?.error(err.response?.data?.error || 'Save failed');
     } finally {
       setSaving(false);
     }
@@ -65,30 +70,29 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-xl dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b px-5 py-4 dark:border-slate-800">
-          <div>
-            <h3 className="font-display text-lg font-semibold text-navy dark:text-white">Edit Shift</h3>
-            <p className="text-sm text-slate-500">{employee?.emp_name} · {date}</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className="animate-scale-in glass-card w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="border-b border-[var(--border)] px-6 py-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-display text-xl font-bold text-[var(--text-primary)]">{employee?.emp_name}</h3>
+              <p className="mt-1 font-mono text-sm text-[var(--text-secondary)]">{date}</p>
+            </div>
+            <button type="button" onClick={onClose} className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-white/5">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800">
-            <X className="h-5 w-5" />
-          </button>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4 p-5">
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Status</legend>
-            <label className="flex items-center gap-2">
-              <input type="radio" checked={status === 'WO'} onChange={() => setStatus('WO')} />
-              Weekly Off
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" checked={status === 'W'} onChange={() => setStatus('W')} />
-              Working
-            </label>
-          </fieldset>
-          {status === 'W' && (
+
+        <form onSubmit={handleSubmit} className="space-y-5 p-6">
+          <Toggle label="Working day" checked={working} onChange={setWorking} />
+          {!working && (
+            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+              Marked as Weekly Off
+            </p>
+          )}
+
+          {working && (
             <>
               <Select label="Shift" value={shiftId} onChange={(e) => onShiftChange(e.target.value)}>
                 <option value="">Select shift</option>
@@ -99,14 +103,37 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
               <div className="grid grid-cols-2 gap-3">
                 <Input label="Shift Start" type="time" value={shiftStart} onChange={(e) => setShiftStart(e.target.value)} />
                 <Input label="Shift End" type="time" value={shiftEnd} onChange={(e) => setShiftEnd(e.target.value)} />
-                <Input label="Mandatory Start" type="time" value={mandStart} onChange={(e) => setMandStart(e.target.value)} />
-                <Input label="Mandatory End" type="time" value={mandEnd} onChange={(e) => setMandEnd(e.target.value)} />
+              </div>
+              <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Mandatory Window</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-xs text-[var(--text-secondary)]">Start</span>
+                    <p className="mt-1 flex items-center gap-2 font-mono text-sm text-[var(--text-primary)]">
+                      <Clock className="h-3.5 w-3.5 text-blue-400" /> {mandStart}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-[var(--text-secondary)]">End</span>
+                    <p className="mt-1 flex items-center gap-2 font-mono text-sm text-[var(--text-primary)]">
+                      <Clock className="h-3.5 w-3.5 text-blue-400" /> {mandEnd}
+                    </p>
+                  </div>
+                </div>
               </div>
             </>
           )}
+
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="secondary" onClick={onClose}>Exit</Button>
-            <Button type="submit" variant="teal" disabled={saving}>{saving ? 'Saving…' : 'Submit'}</Button>
+            <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button type="submit" variant="primary" disabled={saving}>
+              {saving ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Saving…
+                </span>
+              ) : 'Save Changes'}
+            </Button>
           </div>
         </form>
       </div>
