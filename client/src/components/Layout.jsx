@@ -1,19 +1,34 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
-import { Menu, LogOut, Calendar } from 'lucide-react';
+import { Menu, Search, LayoutDashboard, Calendar, Users, Settings } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import Sidebar from './Sidebar';
-import Button from './ui/Button';
+import CommandPalette from './CommandPalette';
 import { ThemeToggleButton } from './ThemeToggle';
+import { usePageTitle } from './PageHeader';
 import { useAuth } from '../context/AuthContext';
-import { getRoleLabel } from '../lib/auth';
+import { cn } from '../lib/utils';
+import UserAvatar from './UserAvatar';
+
+const MOBILE_TABS = [
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
+  { to: '/view-roster', icon: Calendar, label: 'Roster' },
+  { to: '/employees', icon: Users, label: 'People', staff: true },
+  { to: '/settings', icon: Settings, label: 'Settings' },
+];
 
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
+  const [cmdOpen, setCmdOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { title } = usePageTitle(location.pathname);
+
+  useEffect(() => {
+    document.title = `${title} · RosterPro`;
+  }, [title]);
 
   useEffect(() => {
     setMobileNav(false);
@@ -21,10 +36,19 @@ export default function Layout() {
 
   useEffect(() => {
     document.body.style.overflow = mobileNav ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
+    return () => { document.body.style.overflow = ''; };
   }, [mobileNav]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCmdOpen((o) => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -39,71 +63,93 @@ export default function Layout() {
     }
   };
 
+  const staff = user?.role !== 'EMPLOYEE';
+  const mobileTabs = MOBILE_TABS.filter((t) => !t.staff || staff);
+
   return (
-    <div className="flex h-screen h-[100dvh] overflow-hidden bg-slate-50 dark:bg-slate-950">
+    <div className="mesh-bg flex h-screen h-[100dvh] overflow-hidden bg-[var(--bg-primary)]">
       <Sidebar
         collapsed={collapsed}
         mobileOpen={mobileNav}
         onMobileClose={() => setMobileNav(false)}
+        onToggleCollapse={() => setCollapsed((c) => !c)}
+        onLogout={handleLogout}
       />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 sm:h-16 sm:px-4 dark:border-slate-800 dark:bg-slate-900">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between gap-3 overflow-visible border-b border-[var(--border)] bg-[var(--bg-secondary)]/95 px-3 backdrop-blur-xl sm:px-5">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={toggleNav}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--glass-hover)] hover:text-[var(--text-primary)] focus-ring lg:hidden"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <Link to="/dashboard" className="flex min-w-0 items-center gap-2 lg:hidden">
-              <Calendar className="h-6 w-6 shrink-0 text-teal" />
-              <span className="truncate font-display text-base font-semibold text-navy dark:text-white">
-                RosterPro
-              </span>
-            </Link>
-            <nav className="hidden min-w-0 gap-4 overflow-x-auto text-sm font-medium text-slate-600 lg:flex dark:text-slate-400">
-              {(user?.role === 'EMPLOYEE'
-                ? [
-                    { label: 'Dashboard', to: '/dashboard' },
-                    { label: 'Attendance', to: '/attendance' },
-                    { label: 'My Roster', to: '/view-roster' },
-                    { label: 'Leave', to: '/leave' },
-                  ]
-                : [
-                    { label: 'People', to: '/employees' },
-                    { label: 'Leave', to: '/leave' },
-                    { label: 'Attendance', to: '/actual-roster' },
-                    { label: 'Reports', to: '/reports' },
-                    { label: 'PDF Extract', to: '/pdf-extract' },
-                  ]
-              ).map((item) => (
-                <Link key={item.label} to={item.to} className="whitespace-nowrap hover:text-teal dark:hover:text-teal">
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+            <div className="min-w-0 lg:hidden">
+              <p className="truncate font-display text-base font-bold text-[var(--text-primary)]">{title}</p>
+            </div>
           </div>
+
+          <div className="hidden max-w-md flex-1 lg:block">
+            <button
+              type="button"
+              onClick={() => setCmdOpen(true)}
+              className="flex w-full max-w-sm items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--text-secondary)] transition-all hover:border-blue-500/40 focus-ring"
+            >
+              <Search className="h-4 w-4 shrink-0" />
+              <span className="flex-1 text-left">Search…</span>
+              <kbd className="rounded border border-[var(--border)] px-1.5 py-0.5 text-[10px]">⌘K</kbd>
+            </button>
+          </div>
+
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setCmdOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--glass-hover)] lg:hidden"
+              aria-label="Search"
+            >
+              <Search className="h-5 w-5" />
+            </button>
             <ThemeToggleButton />
             <NotificationBell />
             <Link
               to="/profile"
-              className="hidden max-w-[140px] truncate rounded-lg px-2 py-1 text-sm text-slate-600 transition-colors hover:bg-slate-100 hover:text-navy lg:block dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+              className="hidden sm:block"
+              title={user?.name}
             >
-              {user?.name}
-              <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">({getRoleLabel(user?.role)})</span>
+              <UserAvatar user={user} size="md" />
             </Link>
-            <Button variant="ghost" onClick={handleLogout} aria-label="Log out" className="h-10 w-10 px-2">
-              <LogOut className="h-4 w-4" />
-            </Button>
           </div>
         </header>
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50 p-3 sm:p-4 md:p-6 dark:bg-slate-950">
-          <Outlet />
+
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-3 pb-20 sm:p-5 md:p-6 lg:pb-6">
+          <div className="relative z-0 mx-auto max-w-[1600px]">
+            <Outlet />
+          </div>
         </main>
+
+        <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-[var(--border)] bg-[var(--bg-secondary)]/95 backdrop-blur-xl lg:hidden">
+          {mobileTabs.map(({ to, icon: Icon, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className={cn(
+                'flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] transition-colors',
+                location.pathname === to || location.pathname.startsWith(to + '/')
+                  ? 'text-[var(--accent-primary)]'
+                  : 'text-[var(--text-secondary)]'
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </Link>
+          ))}
+        </nav>
       </div>
+
+      <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
     </div>
   );
 }
