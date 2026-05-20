@@ -1,15 +1,28 @@
 import { cn } from '../../lib/utils';
 
-export default function Card({ className, title, children, actions, ...props }) {
+export default function Card({ className, title, children, actions, glass = true, accent, ...props }) {
   return (
-    <div className={cn('rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900', className)} {...props}>
+    <div
+      className={cn(
+        glass ? 'glass-card' : 'rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]',
+        accent && 'border-l-[3px]',
+        accent === 'blue' && 'border-l-blue-500',
+        accent === 'green' && 'border-l-emerald-500',
+        accent === 'amber' && 'border-l-amber-500',
+        accent === 'red' && 'border-l-red-500',
+        className
+      )}
+      {...props}
+    >
       {(title || actions) && (
-        <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 sm:px-5 sm:py-4 dark:border-slate-800">
-          {title && <h3 className="font-display text-base font-semibold text-navy sm:text-lg dark:text-slate-100">{title}</h3>}
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3 sm:px-5 sm:py-4">
+          {title && (
+            <h3 className="font-display text-base font-semibold text-[var(--text-primary)] sm:text-lg">{title}</h3>
+          )}
           {actions}
         </div>
       )}
-      <div className="p-4 sm:p-5">{children}</div>
+      <div className={cn(!title && !actions ? 'p-4 sm:p-5' : 'p-4 sm:p-5')}>{children}</div>
     </div>
   );
 }

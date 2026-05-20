@@ -10,7 +10,7 @@ export function ThemeToggleButton({ className }) {
       onClick={toggle}
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       className={cn(
-        'rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+        'flex h-10 w-10 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-all duration-200 hover:bg-white/5 hover:text-[var(--text-primary)] focus-ring',
         className
       )}
     >
@@ -35,10 +35,10 @@ export function ThemeSelector({ className }) {
           type="button"
           onClick={() => setTheme(id)}
           className={cn(
-            'flex flex-col items-center gap-2 rounded-xl border-2 px-4 py-4 text-sm font-medium transition-all',
+            'flex flex-col items-center gap-2 rounded-xl border-2 px-4 py-4 text-sm font-medium transition-all duration-200',
             theme === id
-              ? 'border-teal bg-teal/10 text-teal dark:bg-teal/20'
-              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600'
+              ? 'border-blue-500 bg-blue-500/10 text-blue-400'
+              : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-blue-500/40'
           )}
         >
           <Icon className="h-6 w-6" />
