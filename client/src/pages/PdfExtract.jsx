@@ -81,6 +81,26 @@ export default function PdfExtract() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadCsv = () => {
+    if (!result?.tables?.length) return;
+    const lines = [];
+    result.tables.forEach((t) => {
+      lines.push(`Page ${t.page}, Table ${t.table_index + 1}`);
+      const rows = t.rows || [];
+      rows.forEach((row) => {
+        lines.push(row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','));
+      });
+      lines.push('');
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${file?.name?.replace(/\.pdf$/i, '') || 'extracted'}-tables.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -201,9 +221,16 @@ export default function PdfExtract() {
                 </p>
               </div>
             </div>
-            <Button variant="secondary" className="mt-4 gap-2" onClick={downloadJson}>
-              <Download className="h-4 w-4" /> Download JSON
-            </Button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button variant="secondary" className="gap-2" onClick={downloadJson}>
+                <Download className="h-4 w-4" /> Download JSON
+              </Button>
+              {(result.tables || []).length > 0 && (
+                <Button variant="primary" className="gap-2" onClick={downloadCsv}>
+                  <Download className="h-4 w-4" /> Download Excel (CSV)
+                </Button>
+              )}
+            </div>
           </Card>
 
           <Card title="Extracted text (preview)">
@@ -213,7 +240,7 @@ export default function PdfExtract() {
                   <p className="mb-1 text-xs font-medium text-teal">
                     Page {p.page} · {p.type} · {p.source}
                   </p>
-                  <pre className="whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300">
+                  <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-[var(--text-primary)]">
                     {p.text?.slice(0, 2000) || '(empty)'}
                     {p.text?.length > 2000 ? '…' : ''}
                   </pre>
@@ -225,24 +252,64 @@ export default function PdfExtract() {
           {(result.tables || []).length > 0 && (
             <Card title={`Tables (${result.tables.length})`}>
               <div className="space-y-6 overflow-x-auto">
-                {result.tables.map((t, i) => (
-                  <div key={`${t.page}-${t.table_index}-${i}`}>
-                    <p className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-400">
-                      Page {t.page} · table {t.table_index + 1} · {t.method}
-                    </p>
-                    <table className="min-w-full border text-xs">
-                      <tbody>
-                        {(t.rows || []).map((row, ri) => (
-                          <tr key={ri} className={ri === 0 ? 'bg-slate-50 font-medium dark:bg-slate-800' : 'border-t dark:border-slate-800'}>
-                            {row.map((cell, ci) => (
-                              <td key={ci} className="border px-2 py-1 dark:border-slate-700">{cell}</td>
+                {result.tables.map((t, i) => {
+                  const headers = t.headers || (t.has_header && t.rows?.[0]) || null;
+                  const bodyRows = t.data_rows?.length
+                    ? t.data_rows
+                    : headers
+                      ? (t.rows || []).slice(1)
+                      : t.rows || [];
+                  return (
+                    <div key={`${t.page}-${t.table_index}-${i}`} className="rounded-lg border border-[var(--border)] overflow-hidden">
+                      <p className="border-b border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-sm font-medium text-[var(--text-secondary)]">
+                        Page {t.page} · table {t.table_index + 1} · {t.method}
+                        {t.col_count ? ` · ${t.col_count} cols` : ''}
+                      </p>
+                      <table className="w-full min-w-max border-collapse text-left text-xs">
+                        <thead>
+                          <tr className="bg-[var(--bg-elevated)]">
+                            {Array.from({
+                              length: Math.max(
+                                t.col_count || 0,
+                                ...(t.rows || []).map((r) => (r || []).length),
+                                headers?.length || 0
+                              ),
+                            }).map((_, ci) => (
+                              <th
+                                key={ci}
+                                className="border border-[var(--border)] px-3 py-2 font-semibold text-[var(--text-secondary)]"
+                              >
+                                {headers?.[ci] || `Col ${ci + 1}`}
+                              </th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ))}
+                        </thead>
+                        <tbody>
+                          {(headers ? bodyRows : t.rows || []).map((row, ri) => (
+                            <tr
+                              key={ri}
+                              className="border-b border-[var(--border)] transition-colors hover:bg-blue-500/[0.04]"
+                            >
+                              {Array.from({
+                                length: Math.max(
+                                  t.col_count || 0,
+                                  ...(t.rows || []).map((r) => (r || []).length)
+                                ),
+                              }).map((_, ci) => (
+                                <td
+                                  key={ci}
+                                  className="border border-[var(--border)] whitespace-pre-wrap px-3 py-2 align-top text-[var(--text-primary)]"
+                                >
+                                  {row?.[ci] || '—'}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })}
               </div>
             </Card>
           )}
