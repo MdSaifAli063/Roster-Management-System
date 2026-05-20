@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Menu, Search, LayoutDashboard, Calendar, Users, Settings } from 'lucide-react';
 import NotificationBell from './NotificationBell';
+import UserMenu from './UserMenu';
 import Sidebar from './Sidebar';
 import CommandPalette from './CommandPalette';
 import { ThemeToggleButton } from './ThemeToggle';
 import { usePageTitle } from './PageHeader';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
-import UserAvatar from './UserAvatar';
 
 const MOBILE_TABS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
@@ -114,13 +114,7 @@ export default function Layout() {
             </button>
             <ThemeToggleButton />
             <NotificationBell />
-            <Link
-              to="/profile"
-              className="hidden sm:block"
-              title={user?.name}
-            >
-              <UserAvatar user={user} size="md" />
-            </Link>
+            <UserMenu onLogout={handleLogout} />
           </div>
         </header>
 
