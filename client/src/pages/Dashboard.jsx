@@ -177,6 +177,7 @@ export default function Dashboard() {
         <div className="grid gap-4 lg:grid-cols-2">
           <Card title="Roster Calendar">
             <MonthCalendar
+              size="md"
               year={viewYear}
               month={viewMonth}
               days={calendarDays}
