@@ -21,6 +21,7 @@ import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import Leave from './pages/Leave';
 import Attendance from './pages/Attendance';
+import PdfExtract from './pages/PdfExtract';
 
 function Staff({ children }) {
   return <StaffRoute>{children}</StaffRoute>;
@@ -54,6 +55,7 @@ export default function App() {
               <Route path="plants" element={<Staff><PlantMaster /></Staff>} />
               <Route path="assignments" element={<Staff><Assignments /></Staff>} />
               <Route path="reports" element={<Staff><Reports /></Staff>} />
+              <Route path="pdf-extract" element={<Staff><PdfExtract /></Staff>} />
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
             </Route>

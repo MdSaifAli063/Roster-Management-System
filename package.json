@@ -6,6 +6,7 @@
     "postinstall": "npm install --prefix client --include=dev",
     "install:all": "npm install --prefix server && npm install --prefix client",
     "dev": "npm run dev --prefix server",
+    "dev:https": "npm run dev:https --prefix server",
     "build": "npm run build --prefix client",
     "vercel-build": "npm install --prefix server && npm run build --prefix client",
     "start": "npm run build && npm run start --prefix server",
