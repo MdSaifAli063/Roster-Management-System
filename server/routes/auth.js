@@ -21,7 +21,14 @@ function signToken(user) {
 }
 
 function publicUser(row) {
-  return { id: row.id, name: row.name, email: row.email, role: row.role, created_at: row.created_at };
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    role: row.role,
+    avatar_url: row.avatar_url || null,
+    created_at: row.created_at,
+  };
 }
 
 function validatePassword(password) {
@@ -108,13 +115,79 @@ router.post('/logout', (_req, res) => {
 router.get('/me', authenticate, async (req, res) => {
   try {
     const { rows } = await query(
-      'SELECT id, name, email, role, created_at FROM users WHERE id = $1',
+      'SELECT id, name, email, role, avatar_url, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'User not found' });
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+router.patch('/profile', authenticate, async (req, res) => {
+  try {
+    const { name, email, avatar_url } = req.body;
+    const updates = [];
+    const values = [];
+    let idx = 1;
+
+    if (name !== undefined) {
+      const trimmed = String(name).trim();
+      if (!trimmed) return res.status(400).json({ error: 'Name cannot be empty' });
+      updates.push(`name = $${idx++}`);
+      values.push(trimmed);
+    }
+
+    if (email !== undefined) {
+      const normalized = String(email).trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(normalized)) {
+        return res.status(400).json({ error: 'Invalid email address' });
+      }
+      const { rows: existing } = await query(
+        'SELECT id FROM users WHERE email = $1 AND id != $2',
+        [normalized, req.user.id]
+      );
+      if (existing.length) {
+        return res.status(409).json({ error: 'Email is already in use' });
+      }
+      updates.push(`email = $${idx++}`);
+      values.push(normalized);
+    }
+
+    if (avatar_url !== undefined) {
+      if (avatar_url === null || avatar_url === '') {
+        updates.push(`avatar_url = $${idx++}`);
+        values.push(null);
+      } else if (typeof avatar_url === 'string') {
+        if (!avatar_url.startsWith('data:image/')) {
+          return res.status(400).json({ error: 'Invalid avatar format' });
+        }
+        if (avatar_url.length > 700000) {
+          return res.status(400).json({ error: 'Avatar image too large (max ~512 KB)' });
+        }
+        updates.push(`avatar_url = $${idx++}`);
+        values.push(avatar_url);
+      }
+    }
+
+    if (!updates.length) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    values.push(req.user.id);
+    const { rows } = await query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = $${idx}
+       RETURNING id, name, email, role, avatar_url, created_at`,
+      values
+    );
+
+    if (!rows[0]) return res.status(404).json({ error: 'User not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Profile update error:', err);
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 });
 

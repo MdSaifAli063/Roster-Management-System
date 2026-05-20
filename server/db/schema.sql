@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(100) UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   role VARCHAR(30) DEFAULT 'HR_USER',
+  avatar_url TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
 

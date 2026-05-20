@@ -64,42 +64,50 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden bg-slate-50 dark:bg-slate-950 lg:flex-row">
-      <div className="hidden flex-1 flex-col justify-center bg-navy p-12 text-white lg:flex">
-        <Calendar className="mb-6 h-12 w-12 text-teal" />
-        <h1 className="font-display text-4xl font-bold">Roster Management</h1>
-        <p className="mt-4 max-w-md text-slate-300">
-          Sign in or create an account. Choose your role — Employee, HR User, or Training Manager.
-        </p>
+    <div className="mesh-bg flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden bg-[var(--bg-primary)] lg:flex-row">
+      <div className="relative hidden flex-1 flex-col justify-center overflow-hidden p-12 lg:flex">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f1e] via-[#111827] to-[#0d1428]" />
+        <div className="relative z-10 max-w-lg">
+          <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-[0_0_40px_rgba(59,130,246,0.4)]">
+            <Calendar className="h-7 w-7 text-white" />
+          </div>
+          <h1 className="font-display text-4xl font-extrabold tracking-tight text-white">RosterPro</h1>
+          <p className="mt-2 text-lg text-blue-300/80">Premium Enterprise Roster Management</p>
+          <p className="mt-6 text-slate-400 leading-relaxed">
+            Manage shifts, attendance, holidays, and reports — all in one unified platform built for modern teams.
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-1 items-center justify-center p-4 sm:p-6 md:p-8">
-        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-lg sm:p-8 dark:border-slate-800 dark:bg-slate-900">
-          <Link to="/" className="mb-4 inline-flex items-center text-sm font-medium text-teal hover:underline">
+      <div className="relative z-10 flex flex-1 items-center justify-center p-4 sm:p-6 md:p-8">
+        <div className="glass-card w-full max-w-md p-6 shadow-2xl sm:p-8 animate-scale-in">
+          <Link to="/" className="mb-4 inline-flex items-center text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">
             ← Back to home
           </Link>
           <div className="mb-6 lg:hidden">
-            <Calendar className="mb-2 h-10 w-10 text-teal" />
-            <h2 className="font-display text-2xl font-bold text-navy dark:text-white">RosterPro</h2>
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500">
+              <Calendar className="h-5 w-5 text-white" />
+            </div>
+            <h2 className="font-display text-2xl font-bold text-[var(--text-primary)]">RosterPro</h2>
           </div>
 
           {isApiMisconfigured() && (
-            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+            <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
               Invalid <strong>VITE_API_URL</strong>. Remove it for Vercel all-in-one deploy, or set a full https://…/api URL.
             </div>
           )}
 
-          <div className="mb-6 flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+          <div className="mb-6 flex rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-1">
             {['signin', 'signup'].map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => { setMode(tab); setError(''); }}
                 className={cn(
-                  'flex-1 rounded-md py-2 text-sm font-medium transition-colors',
+                  'flex-1 rounded-md py-2 text-sm font-medium transition-all duration-200',
                   mode === tab
-                    ? 'bg-white text-navy shadow dark:bg-slate-700 dark:text-white'
-                    : 'text-slate-600 hover:text-navy dark:text-slate-400'
+                    ? 'bg-blue-500/20 text-blue-300 shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 )}
               >
                 {tab === 'signin' ? 'Sign in' : 'Sign up'}
@@ -109,75 +117,29 @@ export default function Login() {
 
           {mode === 'signin' ? (
             <form onSubmit={handleSignIn} className="space-y-4">
-              <Input
-                label="Email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <Input
-                label="Password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" variant="teal" disabled={loading}>
+              <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required error={error || undefined} />
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <Button type="submit" className="w-full btn-glow" variant="primary" disabled={loading}>
                 {loading ? 'Signing in…' : 'Sign in'}
               </Button>
-              <p className="text-center text-xs text-slate-500">
+              <p className="text-center font-mono text-xs text-[var(--text-secondary)]">
                 Demo: admin@roster.com / admin123
               </p>
             </form>
           ) : (
             <form onSubmit={handleSignUp} className="space-y-4">
-              <Input
-                label="Full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-              <Input
-                label="Email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <Select
-                label="Role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
-              >
+              <Input label="Full name" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Select label="Role" value={role} onChange={(e) => setRole(e.target.value)} required>
                 {ROLE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </Select>
-              <Input
-                label="Password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-              />
-              <Input
-                label="Confirm password"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" variant="teal" disabled={loading}>
+              <Input label="Password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+              <Input label="Confirm password" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <Button type="submit" className="w-full btn-glow" variant="primary" disabled={loading}>
                 {loading ? 'Creating account…' : 'Create account'}
               </Button>
             </form>

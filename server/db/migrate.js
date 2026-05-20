@@ -36,6 +36,7 @@ async function migrate() {
     'CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_user_id ON employees(user_id) WHERE user_id IS NOT NULL'
   );
   await pool.query('ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(30)');
+  await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT');
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_notifications (
       id SERIAL PRIMARY KEY,

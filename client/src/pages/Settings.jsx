@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import PageHeader from '../components/PageHeader';
 import { ThemeSelector } from '../components/ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
 import { useNotifications } from '../context/NotificationContext';
 import api from '../api/client';
 
 export default function Settings() {
+  const location = useLocation();
   const { theme } = useTheme();
   const { notifications, unreadCount, markAllRead, clearAllNotifications } = useNotifications();
   const [emailStatus, setEmailStatus] = useState('checking…');
@@ -18,26 +21,27 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Settings</h1>
-        <p className="text-slate-500 dark:text-slate-400">Appearance and notifications</p>
-      </div>
+      <PageHeader
+        pathname={location.pathname}
+        subtitle="Appearance and notification preferences"
+      />
 
       <Card title="Appearance">
-        <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
-          Current theme: <span className="font-medium capitalize text-slate-900 dark:text-slate-100">{theme}</span>
+        <p className="mb-4 text-sm text-[var(--text-secondary)]">
+          Current theme:{' '}
+          <span className="font-medium capitalize text-[var(--text-primary)]">{theme}</span>
         </p>
         <ThemeSelector />
       </Card>
 
       <Card title="Notifications">
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-[var(--text-secondary)]">
           In-app alerts appear in the bell icon (leave, attendance, reassignments). Email alerts fire on the same events when SMTP is configured.
         </p>
-        <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-          You have <span className="font-medium text-navy dark:text-white">{notifications.length}</span> saved
+        <p className="mt-3 text-sm text-[var(--text-secondary)]">
+          You have <span className="font-medium text-[var(--text-primary)]">{notifications.length}</span> saved
           {unreadCount > 0 && (
-            <> (<span className="font-medium text-teal">{unreadCount} unread</span>)</>
+            <> (<span className="font-medium text-[var(--accent-primary)]">{unreadCount} unread</span>)</>
           )}
           .
         </p>
@@ -50,9 +54,8 @@ export default function Settings() {
           {notifications.length > 0 && (
             <Button
               type="button"
-              variant="ghost"
+              variant="danger"
               disabled={clearingNotifs}
-              className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30"
               onClick={async () => {
                 setClearingNotifs(true);
                 try {
@@ -66,9 +69,13 @@ export default function Settings() {
             </Button>
           )}
         </div>
-        <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">{emailStatus}</p>
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          Set <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-slate-700 dark:bg-slate-800 dark:text-slate-300">EMAIL_ENABLED=true</code> and SMTP vars on the server.
+        <p className="mt-4 text-xs text-[var(--text-secondary)]">{emailStatus}</p>
+        <p className="mt-2 text-xs text-[var(--text-secondary)]">
+          Set{' '}
+          <code className="rounded bg-[var(--bg-elevated)] px-1.5 py-0.5 font-mono text-[var(--text-primary)]">
+            EMAIL_ENABLED=true
+          </code>{' '}
+          and SMTP vars on the server.
         </p>
       </Card>
     </div>
