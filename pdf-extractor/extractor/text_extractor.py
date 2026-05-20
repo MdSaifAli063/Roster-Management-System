@@ -15,8 +15,32 @@ from .utils import normalize_indices, open_pdf_safe
 
 def _extract_pdfplumber(page) -> str:
     try:
-        # layout=True helps multi-column reading order
-        text = page.extract_text(layout=True, x_tolerance=2, y_tolerance=2) or ""
+        words = page.extract_words(
+            x_tolerance=3,
+            y_tolerance=3,
+            keep_blank_chars=False,
+            use_text_flow=True,
+        )
+        if words:
+            lines: dict[float, list] = {}
+            for w in words:
+                top = float(w.get("top", 0))
+                y_key = round(top / 5) * 5
+                lines.setdefault(y_key, []).append(w)
+            parts = []
+            for y in sorted(lines.keys()):
+                line_words = sorted(lines[y], key=lambda x: float(x.get("x0", 0)))
+                line_text = " ".join((w.get("text") or "").strip() for w in line_words if w.get("text"))
+                if line_text.strip():
+                    parts.append(line_text)
+            layout_text = "\n".join(parts).strip()
+            if len(layout_text) > 30:
+                return layout_text
+    except Exception:
+        pass
+
+    try:
+        text = page.extract_text(layout=True, x_tolerance=3, y_tolerance=5) or ""
         if not text.strip():
             text = page.extract_text() or ""
         return text.strip()
