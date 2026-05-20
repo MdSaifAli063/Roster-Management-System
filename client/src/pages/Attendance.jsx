@@ -176,6 +176,7 @@ export default function Attendance() {
 
           <Card title="Calendar — holidays & roster">
             <MonthCalendar
+              size="md"
               year={viewYear}
               month={viewMonth}
               days={calendarDays}
@@ -186,7 +187,6 @@ export default function Attendance() {
               }}
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
-              compact
             />
             {selectedInfo?.events?.length > 0 && (
               <ul className="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm dark:border-slate-800">
