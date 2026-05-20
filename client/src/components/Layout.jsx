@@ -76,6 +76,7 @@ export default function Layout() {
                     { label: 'Leave', to: '/leave' },
                     { label: 'Attendance', to: '/actual-roster' },
                     { label: 'Reports', to: '/reports' },
+                    { label: 'PDF Extract', to: '/pdf-extract' },
                   ]
               ).map((item) => (
                 <Link key={item.label} to={item.to} className="whitespace-nowrap hover:text-teal dark:hover:text-teal">

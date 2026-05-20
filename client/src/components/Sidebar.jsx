@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, CalendarDays, Building2,
-  Clock, Palmtree, FileBarChart, Settings, ArrowLeftRight, Eye, Plane, UserCircle, CalendarCheck, X,
+  Clock, Palmtree, FileBarChart, FileText, Settings, ArrowLeftRight, Eye, Plane, UserCircle, CalendarCheck, X,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +20,7 @@ const allLinks = [
   { to: '/plants', icon: Building2, label: 'Plant Master', staffOnly: true },
   { to: '/assignments', icon: ArrowLeftRight, label: 'Reassignment', staffOnly: true },
   { to: '/reports', icon: FileBarChart, label: 'Reports', staffOnly: true },
+  { to: '/pdf-extract', icon: FileText, label: 'PDF Extract', staffOnly: true },
   { to: '/profile', icon: UserCircle, label: 'Profile', staffOnly: false },
   { to: '/settings', icon: Settings, label: 'Settings', staffOnly: false },
 ];
