@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import StaffRoute from './components/StaffRoute';
@@ -32,6 +33,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <NotificationProvider>
+        <ToastProvider>
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -62,6 +64,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+        </ToastProvider>
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
