@@ -3,21 +3,21 @@ import { cn, formatTime } from '../lib/utils';
 export default function ShiftBadge({ status, shiftStart, shiftEnd, className }) {
   if (status === 'WO') {
     return (
-      <span className={cn('inline-flex rounded px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300', className)}>
+      <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/30', className)}>
         WO
       </span>
     );
   }
   if (status === 'H') {
     return (
-      <span className={cn('inline-flex rounded px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300', className)}>
+      <span className={cn('inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold bg-red-500/20 text-red-300 ring-1 ring-red-500/30', className)}>
         H
       </span>
     );
   }
   const label = shiftStart && shiftEnd ? `${formatTime(shiftStart)}–${formatTime(shiftEnd)}` : 'W';
   return (
-    <span className={cn('inline-flex rounded px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300', className)}>
+    <span className={cn('inline-flex rounded-full px-2 py-0.5 font-mono text-[10px] font-medium bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30', className)}>
       {label}
     </span>
   );
