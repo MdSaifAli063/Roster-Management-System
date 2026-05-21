@@ -4,24 +4,37 @@ const { query } = require('./index');
 
 let applied = false;
 
+/** Strip full-line SQL comments so chunks are not dropped by leading `--`. */
+function stripLineComments(sql) {
+  return sql
+    .split('\n')
+    .filter((line) => !/^\s*--/.test(line))
+    .join('\n');
+}
+
+async function ensureRosterColumns() {
+  await query('ALTER TABLE rosters ADD COLUMN IF NOT EXISTS break_minutes INT DEFAULT 0');
+  await query('ALTER TABLE rosters ADD COLUMN IF NOT EXISTS total_hours NUMERIC(5,2)');
+}
+
 async function ensureV2Schema() {
   if (applied) return;
+
   const v2Path = path.join(__dirname, 'migrations-v2.sql');
-  if (!fs.existsSync(v2Path)) return;
-
-  const sql = fs.readFileSync(v2Path, 'utf8');
-  const statements = sql
-    .split(';')
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !s.startsWith('--'));
-
-  for (const stmt of statements) {
+  if (fs.existsSync(v2Path)) {
+    const sql = stripLineComments(fs.readFileSync(v2Path, 'utf8'));
     try {
-      await query(stmt);
+      await query(sql);
     } catch (err) {
-      if (err.code === '42P07' || err.code === '42710') continue;
-      console.warn('Schema statement skipped:', err.message?.slice(0, 120));
+      console.warn('v2 migration batch:', err.message?.slice(0, 200));
     }
+  }
+
+  try {
+    await ensureRosterColumns();
+  } catch (err) {
+    console.error('ensureRosterColumns failed:', err.message);
+    throw err;
   }
 
   try {
@@ -30,10 +43,10 @@ async function ensureV2Schema() {
       ON roster_periods (COALESCE(plant_id, 0), start_date, end_date)
     `);
   } catch {
-    /* ignore */
+    /* roster_periods may not exist yet on very old DBs */
   }
 
   applied = true;
 }
 
-module.exports = { ensureV2Schema };
+module.exports = { ensureV2Schema, ensureRosterColumns };
