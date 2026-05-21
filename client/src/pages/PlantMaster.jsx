@@ -32,6 +32,7 @@ export default function PlantMaster() {
 
       <Card>
         <Input label="Search" value={search} onChange={(e) => { setSearch(e.target.value); load(e.target.value); }} className="mb-4 max-w-xs" />
+        <div className="table-scroll">
         <table className="min-w-full text-sm">
           <thead><tr className="border-b text-left text-slate-500"><th className="p-2">Code</th><th className="p-2">Name</th><th className="p-2">Location</th><th className="p-2">Description</th><th /></tr></thead>
           <tbody>
@@ -46,6 +47,7 @@ export default function PlantMaster() {
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
 
       {form && (

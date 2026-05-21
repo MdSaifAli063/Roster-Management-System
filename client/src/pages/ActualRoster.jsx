@@ -64,7 +64,7 @@ export default function ActualRoster() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Actual Roster</h1>
           <p className="text-slate-500">

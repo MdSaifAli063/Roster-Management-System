@@ -70,8 +70,8 @@ export default function Onboarding() {
           <Input label="Timezone" value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })} />
           <div className="mt-4 space-y-2">
             {DAYS.map((d) => (
-              <div key={d} className="flex flex-wrap items-center gap-2 rounded border border-[var(--border)] p-2">
-                <label className="flex w-24 items-center gap-2 text-sm capitalize">
+              <div key={d} className="flex flex-col gap-2 rounded border border-[var(--border)] p-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <label className="flex w-full items-center gap-2 text-sm capitalize sm:w-24">
                   <input
                     type="checkbox"
                     checked={form.operating_days[d]?.open}

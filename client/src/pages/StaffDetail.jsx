@@ -63,7 +63,7 @@ export default function StaffDetail() {
             <div><dt className="text-[var(--text-secondary)]">Sick leave</dt><dd>{e.sick_leave_balance ?? '—'} days</dd></div>
           </dl>
         )}
-        <div className="mt-6 flex gap-2">
+        <div className="mt-6 flex flex-wrap gap-2">
           {editing ? (
             <>
               <Button variant="primary" onClick={save} disabled={saving}>Save</Button>

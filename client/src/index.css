@@ -393,3 +393,139 @@ h1, h2, h3, h4, h5 {
     transform: none;
   }
 }
+
+@media (max-width: 767px) {
+  .landing-perspective {
+    perspective: none;
+  }
+  .landing-3d-panel {
+    transform: none;
+  }
+  .landing-3d-panel:hover {
+    transform: translateY(-2px);
+  }
+  .landing-card-3d:hover {
+    transform: translateY(-4px);
+  }
+  .landing-orbit-ring {
+    display: none;
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Create roster — timeline grid (reference layout, app theme) */
+.roster-timeline-header {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-teal) 100%);
+  box-shadow: 0 4px 24px rgba(59, 130, 246, 0.25);
+}
+
+.roster-timeline-grid {
+  display: grid;
+  grid-template-columns: minmax(140px, 180px) minmax(520px, 1fr) 56px;
+}
+
+@media (min-width: 640px) {
+  .roster-timeline-grid {
+    grid-template-columns: minmax(160px, 200px) minmax(640px, 1fr) 64px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .roster-timeline-grid {
+    grid-template-columns: minmax(180px, 220px) minmax(640px, 1fr) 72px;
+  }
+}
+
+@media (max-width: 767px) {
+  .roster-timeline-action-btn {
+    font-size: 0.65rem;
+    padding: 0.45rem 0.75rem;
+  }
+}
+
+.roster-timeline-shift-bar {
+  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.roster-timeline-shift-bar:hover {
+  transform: scaleY(1.05);
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.45);
+}
+
+.dark .roster-timeline-shift-bar {
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+}
+
+.roster-timeline-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: transparent;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  border-radius: 2px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.roster-timeline-action-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.roster-timeline-action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.roster-timeline-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: transparent;
+  color: #fff;
+  border-radius: 2px;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.roster-timeline-icon-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.roster-timeline-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.roster-timeline-util-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+@media print {
+  .app-sidebar,
+  .roster-timeline-action-btn,
+  .roster-timeline-icon-btn,
+  .roster-timeline-util-row,
+  header.sticky {
+    display: none !important;
+  }
+  .roster-timeline-header {
+    background: #2563eb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

@@ -11,10 +11,10 @@ export default function RosterGrid({ employees, dates, rosterMap, onCellClick, r
         <table className="min-w-full border-collapse text-sm">
           <thead>
             <tr className="bg-[var(--bg-elevated)]">
-              <th className="sticky left-0 z-30 min-w-[90px] border-b border-r border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] shadow-[4px_0_12px_rgba(0,0,0,0.3)]">
+              <th className="sticky left-0 z-30 w-[72px] min-w-[72px] border-b border-r border-[var(--border)] bg-[var(--bg-elevated)] px-2 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] shadow-[4px_0_12px_rgba(0,0,0,0.3)] sm:w-[90px] sm:min-w-[90px] sm:px-3">
                 Emp Code
               </th>
-              <th className="sticky left-[90px] z-30 min-w-[160px] border-b border-r border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] shadow-[4px_0_12px_rgba(0,0,0,0.3)]">
+              <th className="sticky left-[72px] z-30 min-w-[120px] border-b border-r border-[var(--border)] bg-[var(--bg-elevated)] px-2 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[var(--text-secondary)] shadow-[4px_0_12px_rgba(0,0,0,0.3)] sm:left-[90px] sm:min-w-[160px] sm:px-3">
                 Emp Name
               </th>
               {dates.map((d) => {
@@ -24,7 +24,7 @@ export default function RosterGrid({ employees, dates, rosterMap, onCellClick, r
                   <th
                     key={d.toISOString()}
                     className={cn(
-                      'min-w-[100px] border-b border-[var(--border)] px-2 py-2 text-center',
+                      'min-w-[72px] border-b border-[var(--border)] px-1 py-2 text-center sm:min-w-[100px] sm:px-2',
                       weekend && 'bg-black/20',
                       todayCol && 'border-l-2 border-l-blue-500 bg-blue-500/5'
                     )}
@@ -43,10 +43,10 @@ export default function RosterGrid({ employees, dates, rosterMap, onCellClick, r
                 className="group border-t border-[var(--border)] transition-colors hover:bg-blue-500/[0.04] stagger-row"
                 style={{ animationDelay: `${ri * 50}ms` }}
               >
-                <td className="sticky left-0 z-20 border-r border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 font-mono text-xs text-[var(--text-secondary)] shadow-[4px_0_12px_rgba(0,0,0,0.25)] group-hover:bg-[var(--bg-elevated)]">
+                <td className="sticky left-0 z-20 w-[72px] min-w-[72px] border-r border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-2 font-mono text-xs text-[var(--text-secondary)] shadow-[4px_0_12px_rgba(0,0,0,0.25)] group-hover:bg-[var(--bg-elevated)] sm:w-[90px] sm:min-w-[90px] sm:px-3">
                   {emp.emp_code}
                 </td>
-                <td className="sticky left-[90px] z-20 border-r border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-[var(--text-primary)] shadow-[4px_0_12px_rgba(0,0,0,0.25)] group-hover:bg-[var(--bg-elevated)]">
+                <td className="sticky left-[72px] z-20 min-w-[120px] border-r border-[var(--border)] bg-[var(--bg-secondary)] px-2 py-2 text-[var(--text-primary)] shadow-[4px_0_12px_rgba(0,0,0,0.25)] group-hover:bg-[var(--bg-elevated)] sm:left-[90px] sm:min-w-[160px] sm:px-3">
                   {emp.emp_name}
                 </td>
                 {dates.map((d) => {
@@ -92,7 +92,7 @@ export default function RosterGrid({ employees, dates, rosterMap, onCellClick, r
           </tbody>
         </table>
       </div>
-      <div className="flex flex-wrap gap-4 border-t border-[var(--border)] px-4 py-3 text-xs text-[var(--text-secondary)]">
+      <div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-[var(--border)] px-3 py-3 text-xs text-[var(--text-secondary)] sm:px-4">
         <span><span className="font-semibold text-emerald-400">W</span> Working</span>
         <span><span className="font-semibold text-amber-400">WO</span> Weekly Off</span>
         <span><span className="font-semibold text-red-400">PH</span> Public holiday</span>

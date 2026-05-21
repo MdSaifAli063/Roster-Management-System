@@ -202,11 +202,11 @@ export default function Dashboard() {
                 <li key={t.title} className="stagger-row" style={{ animationDelay: `${i * 50}ms` }}>
                   <Link
                     to={t.to}
-                    className={`flex items-center justify-between rounded-lg border p-3 transition-all duration-200 hover:bg-white/5 ${
+                    className={`flex min-w-0 flex-col gap-2 rounded-lg border p-3 transition-all duration-200 hover:bg-white/5 sm:flex-row sm:items-center sm:justify-between ${
                       t.urgent ? 'border-amber-500/30 bg-amber-500/5' : 'border-[var(--border)]'
                     }`}
                   >
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm font-medium text-[var(--text-primary)]">{t.title}</p>
                       <p className="text-xs text-[var(--text-secondary)]">{t.meta || `${t.count} pending`}</p>
                     </div>

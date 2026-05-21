@@ -5,6 +5,51 @@ export const BREAK_OPTIONS = [
   { value: 60, label: '1 hour' },
 ];
 
+export function timeToMinutes(t) {
+  if (!t) return null;
+  const [h, m] = String(t).slice(0, 5).split(':').map(Number);
+  return h * 60 + m;
+}
+
+export function minutesToTime(mins) {
+  const h = Math.floor(mins / 60) % 24;
+  const m = mins % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/** Display: 6:15a, 12:15p */
+export function formatTime12(t) {
+  if (!t) return '';
+  const [h, m] = String(t).slice(0, 5).split(':').map(Number);
+  const am = h < 12;
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')}${am ? 'a' : 'p'}`;
+}
+
+export const TIMELINE_START_HOUR = 5;
+export const TIMELINE_END_HOUR = 22;
+export const TIMELINE_START_MIN = TIMELINE_START_HOUR * 60;
+export const TIMELINE_END_MIN = TIMELINE_END_HOUR * 60;
+export const TIMELINE_TOTAL_MIN = TIMELINE_END_MIN - TIMELINE_START_MIN;
+
+export function shiftBarPercent(shiftStart, shiftEnd) {
+  const start = timeToMinutes(shiftStart);
+  const end = timeToMinutes(shiftEnd);
+  if (start == null || end == null || end <= start) return null;
+  const left = ((Math.max(start, TIMELINE_START_MIN) - TIMELINE_START_MIN) / TIMELINE_TOTAL_MIN) * 100;
+  const right = ((Math.min(end, TIMELINE_END_MIN) - TIMELINE_START_MIN) / TIMELINE_TOTAL_MIN) * 100;
+  return { left: `${left}%`, width: `${Math.max(0, right - left)}%` };
+}
+
+export function snapMinutes(mins, step = 15) {
+  return Math.round(mins / step) * step;
+}
+
+export function clickMinutesFromRatio(ratio) {
+  const raw = TIMELINE_START_MIN + ratio * TIMELINE_TOTAL_MIN;
+  return snapMinutes(Math.max(TIMELINE_START_MIN, Math.min(TIMELINE_END_MIN - 15, raw)));
+}
+
 export function generateTimeSlots(stepMinutes = 15) {
   const slots = [];
   for (let m = 0; m < 24 * 60; m += stepMinutes) {

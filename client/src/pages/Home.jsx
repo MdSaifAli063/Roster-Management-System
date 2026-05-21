@@ -142,14 +142,14 @@ function HeroMockup() {
               ))}
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
-              <div className="grid grid-cols-5 border-b border-[var(--border)] bg-[var(--bg-elevated)] text-center text-[10px] font-semibold text-[var(--text-secondary)]">
+            <div className="overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+              <div className="grid min-w-[280px] grid-cols-[minmax(64px,1fr)_repeat(4,minmax(44px,1fr))] border-b border-[var(--border)] bg-[var(--bg-elevated)] text-center text-[10px] font-semibold text-[var(--text-secondary)]">
                 <div className="p-2 text-left">Employee</div>
                 {days.map((d) => (
                   <div key={d} className="p-2">{d}</div>
                 ))}
               </div>
-              <div className="grid grid-cols-5 items-center gap-1 p-2">
+              <div className="grid min-w-[280px] grid-cols-[minmax(64px,1fr)_repeat(4,minmax(44px,1fr))] items-center gap-1 p-2">
                 <div className="text-xs font-medium text-[var(--text-primary)]">Sarah K.</div>
                 {cells.map((c, i) => (
                   <div

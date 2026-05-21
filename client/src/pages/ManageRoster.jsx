@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import api from '../api/client';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import EmployeeFilterForm, { buildQuery } from '../components/EmployeeFilterForm';
+import RosterTimelineEditor from '../components/RosterTimelineEditor';
+import PageHeader from '../components/PageHeader';
 
 export default function ManageRoster() {
-  const navigate = useNavigate();
+  const location = useLocation();
   const [step, setStep] = useState(0);
   const [createMode, setCreateMode] = useState(null);
   const [filters, setFilters] = useState({});
@@ -18,6 +20,7 @@ export default function ManageRoster() {
   const [patternId, setPatternId] = useState('');
   const [patterns, setPatterns] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [editorEmployees, setEditorEmployees] = useState([]);
 
   const searchEmployees = async () => {
     setLoading(true);
@@ -61,7 +64,8 @@ export default function ManageRoster() {
       setStep(2);
       const p = await api.get('/shifts/patterns');
       setPatterns(p.data);
-      setEmployees(await api.get('/employees', { params: buildQuery(filters) }).then((r) => r.data));
+      const { data: emps } = await api.get('/employees', { params: buildQuery(filters) });
+      setEmployees(emps);
     } catch (err) {
       alert(err.response?.data?.error || 'Could not load previous roster');
       setStep(0);
@@ -70,72 +74,80 @@ export default function ManageRoster() {
     }
   };
 
-  const startBlank = async () => {
+  const startBlank = () => {
     setCreateMode('blank');
     setStep(1);
   };
 
-  const applyPreviousTemplate = async () => {
-    setLoading(true);
-    try {
-      const { data } = await api.get('/rosters/previous-period', { params: { plant_id: filters.plant_id } });
-      for (const e of data.entries || []) {
-        await api.put(`/rosters/cell/${e.emp_id}/${e.roster_date?.slice?.(0, 10) || e.roster_date}`, {
-          status: e.status,
-          shift_id: e.shift_id,
-          shift_start: e.shift_start,
-          shift_end: e.shift_end,
-          mandatory_start: e.mandatory_start,
-          mandatory_end: e.mandatory_end,
-          break_minutes: e.break_minutes || 0,
-        });
-      }
-      alert('Previous roster copied — edit cells in View Roster');
-      navigate('/view-roster', { state: { startDate, endDate } });
-    } catch (err) {
-      alert(err.response?.data?.error || 'Copy failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generate = async (andView) => {
-    if (!selected.size || !startDate || !endDate || !patternId) {
-      alert('Select employees, dates, and shift pattern');
+  const openEditor = async () => {
+    if (!selected.size || !startDate || !endDate) {
+      alert('Select employees and roster dates');
       return;
     }
     setLoading(true);
     try {
-      await api.post('/rosters/generate', {
-        emp_ids: [...selected],
-        start_date: startDate,
-        end_date: endDate,
-        shift_pattern_id: Number(patternId),
-      });
-      if (andView) {
-        navigate('/view-roster', {
-          state: { empIds: [...selected], startDate, endDate },
+      const selectedList = employees.filter((e) => selected.has(e.id));
+
+      if (createMode === 'previous') {
+        const { data } = await api.get('/rosters/previous-period', { params: { plant_id: filters.plant_id } });
+        for (const e of data.entries || []) {
+          if (!selected.has(e.emp_id)) continue;
+          await api.put(`/rosters/cell/${e.emp_id}/${e.roster_date?.slice?.(0, 10) || e.roster_date}`, {
+            status: e.status,
+            shift_id: e.shift_id,
+            shift_start: e.shift_start,
+            shift_end: e.shift_end,
+            mandatory_start: e.mandatory_start,
+            mandatory_end: e.mandatory_end,
+            break_minutes: e.break_minutes || 0,
+          });
+        }
+      } else if (patternId) {
+        await api.post('/rosters/generate', {
+          emp_ids: [...selected],
+          start_date: startDate,
+          end_date: endDate,
+          shift_pattern_id: Number(patternId),
         });
-      } else {
-        navigate('/dashboard');
       }
+
+      setEditorEmployees(selectedList);
+      setStep(3);
     } catch (err) {
-      alert(err.response?.data?.error || 'Generation failed');
+      alert(err.response?.data?.error || 'Could not open roster editor');
     } finally {
       setLoading(false);
     }
   };
 
+  if (step === 3) {
+    return (
+      <div className="space-y-4">
+        <PageHeader pathname={location.pathname} subtitle={`${startDate} → ${endDate} · timeline editor`} />
+        <RosterTimelineEditor
+          startDate={startDate}
+          endDate={endDate}
+          plantId={filters.plant_id}
+          initialEmployees={editorEmployees}
+          onExit={() => setStep(2)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Create Roster</h1>
+      <PageHeader
+        pathname={location.pathname}
+        subtitle={step === 0 ? 'Start from a previous period or a blank roster' : 'Configure period and staff, then open the timeline editor'}
+      />
 
       {step === 0 && (
         <Card title="How do you want to start?">
           <div className="grid gap-4 sm:grid-cols-2">
             <button
               type="button"
-              className="rounded-xl border border-[var(--border)] p-6 text-left transition hover:border-[var(--accent-primary)]"
+              className="rounded-xl border border-[var(--border)] p-6 text-left transition hover:border-[var(--accent-primary)] hover:shadow-lg hover:shadow-blue-500/10"
               onClick={loadFromPrevious}
               disabled={loading}
             >
@@ -144,64 +156,65 @@ export default function ManageRoster() {
             </button>
             <button
               type="button"
-              className="rounded-xl border border-[var(--border)] p-6 text-left transition hover:border-[var(--accent-primary)]"
+              className="rounded-xl border border-[var(--border)] p-6 text-left transition hover:border-[var(--accent-primary)] hover:shadow-lg hover:shadow-blue-500/10"
               onClick={startBlank}
             >
               <p className="font-semibold text-[var(--text-primary)]">Start Blank</p>
-              <p className="mt-1 text-sm text-[var(--text-secondary)]">Empty grid — pick employees and dates</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">Pick staff and dates, then edit on the timeline grid</p>
             </button>
           </div>
         </Card>
       )}
 
       {step === 1 && (
-        <Card title="Step 1 — Employee Roster Search">
+        <Card title="Step 1 — Find employees">
           <EmployeeFilterForm
             filters={filters}
             onChange={setFilters}
             onSubmit={searchEmployees}
-            submitLabel={loading ? 'Searching…' : 'Submit'}
+            submitLabel={loading ? 'Searching…' : 'Continue'}
           />
+          <Button className="mt-4" variant="ghost" onClick={() => setStep(0)}>Back</Button>
         </Card>
       )}
 
       {step === 2 && (
-        <Card title="Step 2 — Select Employees">
+        <Card title="Step 2 — Period & staff">
           <div className="mb-4 grid gap-4 sm:grid-cols-3">
-            <Input label="Roster Start Date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            <Input label="Roster End Date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            <Select label="Applicable Shift Pattern" value={patternId} onChange={(e) => setPatternId(e.target.value)}>
-              <option value="">Select pattern</option>
+            <Input label="Roster start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <Input label="Roster end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <Select label="Shift pattern (optional)" value={patternId} onChange={(e) => setPatternId(e.target.value)}>
+              <option value="">None — edit manually on timeline</option>
               {patterns.map((p) => (
                 <option key={p.id} value={p.id}>{p.pattern_name}</option>
               ))}
             </Select>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-lg border border-[var(--border)]">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="border-b text-left">
+                <tr className="border-b border-[var(--border)] bg-[var(--bg-elevated)] text-left text-[var(--text-secondary)]">
                   <th className="p-2">
-                    <input type="checkbox" checked={selected.size === employees.length} onChange={(e) => toggleAll(e.target.checked)} />
+                    <input
+                      type="checkbox"
+                      checked={selected.size === employees.length && employees.length > 0}
+                      onChange={(e) => toggleAll(e.target.checked)}
+                    />
                   </th>
-                  <th className="p-2">Emp Code</th>
-                  <th className="p-2">Emp Name</th>
-                  <th className="p-2">Process</th>
-                  <th className="p-2">Grade</th>
+                  <th className="p-2">Code</th>
+                  <th className="p-2">Name</th>
                   <th className="p-2">Role</th>
-                  <th className="p-2">Shift Pattern</th>
                 </tr>
               </thead>
               <tbody>
                 {employees.map((e) => (
-                  <tr key={e.id} className="border-b border-slate-100 dark:border-slate-800">
-                    <td className="p-2"><input type="checkbox" checked={selected.has(e.id)} onChange={() => toggleOne(e.id)} /></td>
-                    <td className="p-2 font-mono">{e.emp_code}</td>
+                  <tr key={e.id} className="border-b border-[var(--border)]">
+                    <td className="p-2">
+                      <input type="checkbox" checked={selected.has(e.id)} onChange={() => toggleOne(e.id)} />
+                    </td>
+                    <td className="p-2 font-mono text-xs">{e.emp_code}</td>
                     <td className="p-2">{e.emp_name}</td>
-                    <td className="p-2">{e.process}</td>
-                    <td className="p-2">{e.grade}</td>
-                    <td className="p-2">{e.role}</td>
-                    <td className="p-2">{e.pattern_name || e.current_shift_pattern}</td>
+                    <td className="p-2 text-[var(--text-secondary)]">{e.role}</td>
                   </tr>
                 ))}
               </tbody>
@@ -209,13 +222,13 @@ export default function ManageRoster() {
           </div>
           <div className="mt-6 flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => setStep(createMode === 'blank' ? 1 : 0)}>Back</Button>
-            {createMode === 'previous' && (
-              <Button variant="secondary" disabled={loading} onClick={applyPreviousTemplate}>Copy previous cells</Button>
-            )}
-            <Button variant="teal" disabled={loading} onClick={() => generate(true)}>Submit and View Roster</Button>
-            <Button variant="primary" disabled={loading} onClick={() => generate(false)}>Submit and Exit</Button>
-            <Button variant="ghost" onClick={() => navigate('/dashboard')}>Exit without Saving</Button>
+            <Button variant="primary" disabled={loading} onClick={openEditor} className="btn-glow">
+              {loading ? 'Preparing…' : 'Open timeline editor'}
+            </Button>
           </div>
+          <p className="mt-3 text-xs text-[var(--text-secondary)]">
+            The editor shows an hourly grid (5am–10pm), day tabs, shift bars, hours &amp; cost totals — matching your roster workflow.
+          </p>
         </Card>
       )}
     </div>

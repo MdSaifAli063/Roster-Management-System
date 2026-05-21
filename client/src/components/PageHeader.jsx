@@ -2,10 +2,11 @@ import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { isEmployee } from '../lib/auth';
+import { cn } from '../lib/utils';
 
 const ROUTE_META = {
   '/dashboard': { title: 'Dashboard', crumbs: ['Home', 'Dashboard'], employeeTitle: 'My Dashboard', employeeCrumbs: ['Home', 'My Dashboard'] },
-  '/manage-roster': { title: 'Manage Roster', crumbs: ['Roster', 'Manage'] },
+  '/manage-roster': { title: 'Create Roster', crumbs: ['Roster', 'Create'] },
   '/view-roster': { title: 'View Roster', crumbs: ['Roster', 'View'], employeeTitle: 'My Roster', employeeCrumbs: ['My work', 'My Roster'] },
   '/actual-roster': { title: 'Actual Roster', crumbs: ['Roster', 'Actual'] },
   '/employees': { title: 'Employees', crumbs: ['Masters', 'Employees'] },
@@ -34,21 +35,25 @@ export default function PageHeader({ pathname, subtitle, actions }) {
   const { title, crumbs } = usePageTitle(pathname, user?.role);
 
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0 animate-fade-up">
-        <nav className="mb-1 flex items-center gap-1 text-xs text-[var(--text-secondary)]">
+    <div className="mb-4 flex min-w-0 flex-col gap-4 sm:mb-6 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0 flex-1 animate-fade-up">
+        <nav className="mb-1 flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 text-xs text-[var(--text-secondary)]">
           <Link to="/dashboard" className="hover:text-[var(--accent-glow)] transition-colors">Home</Link>
           {crumbs.map((c, i) => (
             <span key={c} className="flex items-center gap-1">
-              <ChevronRight className="h-3 w-3 opacity-50" />
-              <span className={i === crumbs.length - 1 ? 'text-[var(--text-primary)]' : ''}>{c}</span>
+              <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />
+              <span className={cn(i === crumbs.length - 1 ? 'text-[var(--text-primary)]' : '', 'break-words')}>{c}</span>
             </span>
           ))}
         </nav>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-[var(--text-secondary)]">{subtitle}</p>}
+        <h1 className="break-words font-display text-xl font-bold tracking-tight text-[var(--text-primary)] sm:text-2xl md:text-3xl">{title}</h1>
+        {subtitle && <p className="mt-1 break-words text-sm text-[var(--text-secondary)]">{subtitle}</p>}
       </div>
-      {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }

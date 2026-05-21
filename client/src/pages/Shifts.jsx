@@ -46,6 +46,7 @@ export default function Shifts() {
 
       {tab === 'shifts' && (
         <Card title="Shift Definitions" actions={<Button variant="teal" onClick={() => setShiftForm({ shift_name: '', shift_start: '09:00', shift_end: '18:00', mandatory_start: '09:00', mandatory_end: '18:00' })}>Add</Button>}>
+          <div className="table-scroll">
           <table className="min-w-full text-sm">
             <thead><tr className="border-b text-left text-slate-500"><th className="p-2">Name</th><th className="p-2">Start</th><th className="p-2">End</th><th className="p-2">Mandatory</th><th /></tr></thead>
             <tbody>
@@ -60,11 +61,13 @@ export default function Shifts() {
               ))}
             </tbody>
           </table>
+          </div>
         </Card>
       )}
 
       {tab === 'patterns' && (
         <Card title="Shift Patterns" actions={<Button variant="teal" onClick={() => setPatternForm({ pattern_name: '', shift_id: shifts[0]?.id, mon: true, tue: true, wed: true, thu: true, fri: true, sat: false, sun: false })}>Add</Button>}>
+          <div className="table-scroll">
           <table className="min-w-full text-sm">
             <thead><tr className="border-b text-left text-slate-500"><th className="p-2">Pattern</th><th className="p-2">Shift</th>{DAYS.map((d) => <th key={d} className="p-2 uppercase">{d}</th>)}<th /></tr></thead>
             <tbody>
@@ -78,6 +81,7 @@ export default function Shifts() {
               ))}
             </tbody>
           </table>
+          </div>
         </Card>
       )}
 

@@ -15,11 +15,11 @@ export default function Card({ className, title, children, actions, glass = true
       {...props}
     >
       {(title || actions) && (
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3 sm:px-5 sm:py-4">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 border-b border-[var(--border)] px-4 py-3 sm:px-5 sm:py-4">
           {title && (
-            <h3 className="font-display text-base font-semibold text-[var(--text-primary)] sm:text-lg">{title}</h3>
+            <h3 className="min-w-0 flex-1 font-display text-base font-semibold text-[var(--text-primary)] sm:text-lg">{title}</h3>
           )}
-          {actions}
+          {actions && <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">{actions}</div>}
         </div>
       )}
       <div className={cn(!title && !actions ? 'p-4 sm:p-5' : 'p-4 sm:p-5')}>{children}</div>

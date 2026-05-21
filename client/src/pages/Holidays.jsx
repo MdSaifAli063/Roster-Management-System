@@ -136,6 +136,7 @@ export default function Holidays() {
           {[2024, 2025, 2026].map((y) => <option key={y} value={y}>{y}</option>)}
         </Select>
       }>
+        <div className="table-scroll">
         <table className="min-w-full text-sm">
           <thead><tr className="border-b text-left text-slate-500"><th className="p-2">Date</th><th className="p-2">Name</th><th className="p-2">Plant</th><th className="p-2">National</th><th className="p-2">Paid</th><th /></tr></thead>
           <tbody>
@@ -151,6 +152,7 @@ export default function Holidays() {
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
     </div>
   );

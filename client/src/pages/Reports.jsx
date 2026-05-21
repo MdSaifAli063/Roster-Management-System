@@ -81,7 +81,7 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold text-[var(--text-primary)]">Reports</h1>
+      <h1 className="font-display text-xl font-bold text-[var(--text-primary)] sm:text-2xl">Reports</h1>
 
       <Card title="Date range">
         <div className="grid gap-3 sm:grid-cols-4">
@@ -107,7 +107,8 @@ export default function Reports() {
             <Button variant="ghost" onClick={() => downloadReportExport('hours', params, 'pdf')}>PDF</Button>
           </div>
           {hours.length > 0 && (
-            <table className="mt-4 w-full text-xs">
+            <div className="table-scroll mt-4">
+            <table className="w-full min-w-[320px] text-xs">
               <thead><tr className="text-[var(--text-secondary)]"><th className="p-1">Employee</th><th>Period</th><th>Hours</th></tr></thead>
               <tbody>
                 {hours.slice(0, 30).map((r, i) => (
@@ -119,6 +120,7 @@ export default function Reports() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </Card>
 
@@ -129,7 +131,8 @@ export default function Reports() {
             <Button variant="ghost" onClick={() => downloadReportExport('wages', params, 'pdf')}>PDF</Button>
           </div>
           {wages.length > 0 && (
-            <table className="mt-4 w-full text-xs">
+            <div className="table-scroll mt-4">
+            <table className="w-full min-w-[280px] text-xs">
               <thead><tr className="text-[var(--text-secondary)]"><th className="p-1">Employee</th><th>Wages</th></tr></thead>
               <tbody>
                 {wages.slice(0, 30).map((r, i) => (
@@ -140,13 +143,15 @@ export default function Reports() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </Card>
 
         <Card title="Combined (hours + wages)" className="lg:col-span-2">
           <Button variant="teal" onClick={loadCombined}>Generate combined</Button>
           {combined.length > 0 && (
-            <table className="mt-4 w-full text-xs">
+            <div className="table-scroll mt-4">
+            <table className="w-full min-w-[360px] text-xs">
               <thead>
                 <tr className="text-[var(--text-secondary)]">
                   <th className="p-1">Employee</th><th>Period</th><th>Hours</th><th>Wages</th>
@@ -163,6 +168,7 @@ export default function Reports() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </Card>
 
@@ -185,7 +191,8 @@ export default function Reports() {
       <Card title="Attendance summary">
         <Button variant="secondary" onClick={loadSummary}>Generate</Button>
         {summary.length > 0 && (
-          <table className="mt-4 min-w-full text-sm">
+          <div className="table-scroll mt-4">
+          <table className="min-w-full text-sm">
             <thead><tr className="border-b text-left text-[var(--text-secondary)]"><th className="p-2">Code</th><th>Name</th><th>Working</th><th>WO</th><th>Holidays</th></tr></thead>
             <tbody>
               {summary.map((r) => (
@@ -199,6 +206,7 @@ export default function Reports() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
     </div>

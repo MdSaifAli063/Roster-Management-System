@@ -9,7 +9,16 @@ import { BREAK_OPTIONS, generateTimeSlots, computeTotalHours } from '../lib/rost
 
 const TIME_SLOTS = generateTimeSlots(15);
 
-export default function ShiftEditModal({ open, onClose, employee, date, cell, onSaved }) {
+export default function ShiftEditModal({
+  open,
+  onClose,
+  employee,
+  date,
+  cell,
+  onSaved,
+  /** When false, apply via onSaved(cell) only — parent handles Save to server */
+  persistOnSave = true,
+}) {
   const [shifts, setShifts] = useState([]);
   const [working, setWorking] = useState(true);
   const [locked, setLocked] = useState(false);
@@ -61,17 +70,34 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
     setSaving(true);
     const status = working ? 'W' : 'WO';
     try {
-      await api.put(`/rosters/cell/${employee.id}/${date}`, {
+      const payload = {
+        emp_id: employee.id,
+        roster_date: date,
         status,
-        shift_id: status === 'W' ? Number(shiftId) : null,
+        shift_id: status === 'W' && shiftId ? Number(shiftId) : null,
         shift_start: status === 'W' ? shiftStart : null,
         shift_end: status === 'W' ? shiftEnd : null,
         mandatory_start: status === 'W' ? mandStart : null,
         mandatory_end: status === 'W' ? mandEnd : null,
         break_minutes: status === 'W' ? breakMinutes : 0,
-      });
-      toast?.success('Shift saved');
-      onSaved?.();
+        total_hours: status === 'W' ? totalHours : 0,
+      };
+      if (persistOnSave) {
+        await api.put(`/rosters/cell/${employee.id}/${date}`, {
+          status: payload.status,
+          shift_id: payload.shift_id,
+          shift_start: payload.shift_start,
+          shift_end: payload.shift_end,
+          mandatory_start: payload.mandatory_start,
+          mandatory_end: payload.mandatory_end,
+          break_minutes: payload.break_minutes,
+        });
+        toast?.success('Shift saved');
+        onSaved?.();
+      } else {
+        onSaved?.(payload);
+        toast?.success('Shift updated — click Save to store roster');
+      }
       onClose();
     } catch (err) {
       toast?.error(err.response?.data?.error || 'Save failed');

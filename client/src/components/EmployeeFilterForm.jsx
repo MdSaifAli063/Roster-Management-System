@@ -21,7 +21,7 @@ export default function EmployeeFilterForm({ filters, onChange, onSubmit, extraF
         const selected = Array.from(e.target.selectedOptions, (o) => o.value);
         onChange({ ...filters, [name]: selected });
       }}
-      className="h-24"
+      className="h-20 sm:h-24"
     >
       {values.map((v) => (
         <option key={v} value={v}>{v}</option>
@@ -48,7 +48,7 @@ export default function EmployeeFilterForm({ filters, onChange, onSubmit, extraF
       <Input label="Shift" value={filters.shift || ''} onChange={(e) => onChange({ ...filters, shift: e.target.value })} />
       {extraFields}
       <div className="flex items-end sm:col-span-2 lg:col-span-3">
-        <Button type="submit" variant="teal">{submitLabel}</Button>
+        <Button type="submit" variant="teal" className="w-full sm:w-auto">{submitLabel}</Button>
       </div>
     </form>
   );

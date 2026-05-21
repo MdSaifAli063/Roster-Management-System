@@ -52,6 +52,7 @@ export default function Assignments() {
       </Card>
 
       <Card title="History">
+        <div className="table-scroll">
         <table className="min-w-full text-sm">
           <thead><tr className="border-b text-left text-slate-500"><th className="p-2">Date</th><th className="p-2">From</th><th className="p-2">To</th><th className="p-2">Reason</th><th className="p-2">Notes</th></tr></thead>
           <tbody>
@@ -66,6 +67,7 @@ export default function Assignments() {
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
     </div>
   );
