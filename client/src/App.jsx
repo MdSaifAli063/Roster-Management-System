@@ -4,7 +4,9 @@ import { NotificationProvider } from './context/NotificationContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import StaffRoute from './components/StaffRoute';
+import EmployerRoute from './components/EmployerRoute';
+import EmployeeRoute from './components/EmployeeRoute';
+import OnboardingGate from './components/OnboardingGate';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -23,9 +25,17 @@ import Profile from './pages/Profile';
 import Leave from './pages/Leave';
 import Attendance from './pages/Attendance';
 import PdfExtract from './pages/PdfExtract';
+import Onboarding from './pages/Onboarding';
+import Staff from './pages/Staff';
+import StaffDetail from './pages/StaffDetail';
+import Finance from './pages/Finance';
 
-function Staff({ children }) {
-  return <StaffRoute>{children}</StaffRoute>;
+function Employer({ children }) {
+  return (
+    <EmployerRoute>
+      <OnboardingGate>{children}</OnboardingGate>
+    </EmployerRoute>
+  );
 }
 
 export default function App() {
@@ -33,38 +43,43 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <NotificationProvider>
-        <ToastProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="manage-roster" element={<Staff><ManageRoster /></Staff>} />
-              <Route path="view-roster" element={<ViewRoster />} />
-              <Route path="actual-roster" element={<Staff><ActualRoster /></Staff>} />
-              <Route path="leave" element={<Leave />} />
-              <Route path="attendance" element={<Attendance />} />
-              <Route path="employees" element={<Staff><Employees /></Staff>} />
-              <Route path="shifts" element={<Staff><Shifts /></Staff>} />
-              <Route path="holidays" element={<Staff><Holidays /></Staff>} />
-              <Route path="plants" element={<Staff><PlantMaster /></Staff>} />
-              <Route path="assignments" element={<Staff><Assignments /></Staff>} />
-              <Route path="reports" element={<Staff><Reports /></Staff>} />
-              <Route path="pdf-extract" element={<Staff><PdfExtract /></Staff>} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-        </ToastProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="manage-roster" element={<Employer><ManageRoster /></Employer>} />
+                  <Route path="view-roster" element={<ViewRoster />} />
+                  <Route path="actual-roster" element={<Employer><ActualRoster /></Employer>} />
+                  <Route path="leave" element={<Leave />} />
+                  <Route path="attendance" element={<EmployeeRoute><Attendance /></EmployeeRoute>} />
+                  <Route path="staff" element={<Employer><Staff /></Employer>} />
+                  <Route path="staff/:id" element={<Employer><StaffDetail /></Employer>} />
+                  <Route path="employees" element={<Employer><Employees /></Employer>} />
+                  <Route path="shifts" element={<Employer><Shifts /></Employer>} />
+                  <Route path="holidays" element={<Employer><Holidays /></Employer>} />
+                  <Route path="plants" element={<Employer><PlantMaster /></Employer>} />
+                  <Route path="assignments" element={<Employer><Assignments /></Employer>} />
+                  <Route path="reports" element={<Employer><Reports /></Employer>} />
+                  <Route path="pdf-extractor" element={<Employer><PdfExtract /></Employer>} />
+                  <Route path="pdf-extract" element={<Navigate to="/pdf-extractor" replace />} />
+                  <Route path="finance" element={<Employer><Finance /></Employer>} />
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="settings" element={<Settings />} />
+                </Route>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </ToastProvider>
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -1,21 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../api/client';
 import Button from './ui/Button';
 import { Input, Select, Toggle } from './ui/Input';
 import { formatTime } from '../lib/utils';
 import { useToast } from '../context/ToastContext';
 import { X, Clock } from 'lucide-react';
+import { BREAK_OPTIONS, generateTimeSlots, computeTotalHours } from '../lib/rosterTime';
+
+const TIME_SLOTS = generateTimeSlots(15);
 
 export default function ShiftEditModal({ open, onClose, employee, date, cell, onSaved }) {
   const [shifts, setShifts] = useState([]);
   const [working, setWorking] = useState(true);
+  const [locked, setLocked] = useState(false);
   const [shiftId, setShiftId] = useState('');
-  const [shiftStart, setShiftStart] = useState('');
-  const [shiftEnd, setShiftEnd] = useState('');
+  const [shiftStart, setShiftStart] = useState('09:00');
+  const [shiftEnd, setShiftEnd] = useState('17:00');
+  const [breakMinutes, setBreakMinutes] = useState(0);
   const [mandStart, setMandStart] = useState('');
   const [mandEnd, setMandEnd] = useState('');
   const [saving, setSaving] = useState(false);
   const toast = useToast();
+
+  const totalHours = useMemo(
+    () => (working ? computeTotalHours(shiftStart, shiftEnd, breakMinutes) : 0),
+    [working, shiftStart, shiftEnd, breakMinutes]
+  );
 
   useEffect(() => {
     api.get('/shifts').then((r) => setShifts(r.data));
@@ -24,12 +34,14 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
   useEffect(() => {
     if (!open) return;
     const st = cell?.status || 'W';
+    setLocked(st === 'LEAVE' || st === 'H' || st === 'PH');
     setWorking(st === 'W');
     setShiftId(cell?.shift_id ? String(cell.shift_id) : '');
     setShiftStart(formatTime(cell?.shift_start) || '09:00');
-    setShiftEnd(formatTime(cell?.shift_end) || '18:00');
+    setShiftEnd(formatTime(cell?.shift_end) || '17:00');
+    setBreakMinutes(Number(cell?.break_minutes) || 0);
     setMandStart(formatTime(cell?.mandatory_start) || '09:00');
-    setMandEnd(formatTime(cell?.mandatory_end) || '18:00');
+    setMandEnd(formatTime(cell?.mandatory_end) || '17:00');
   }, [open, cell]);
 
   const onShiftChange = (id) => {
@@ -45,19 +57,20 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (locked) return;
     setSaving(true);
     const status = working ? 'W' : 'WO';
     try {
-      const payload = {
+      await api.put(`/rosters/cell/${employee.id}/${date}`, {
         status,
         shift_id: status === 'W' ? Number(shiftId) : null,
         shift_start: status === 'W' ? shiftStart : null,
         shift_end: status === 'W' ? shiftEnd : null,
         mandatory_start: status === 'W' ? mandStart : null,
         mandatory_end: status === 'W' ? mandEnd : null,
-      };
-      await api.put(`/rosters/cell/${employee.id}/${date}`, payload);
-      toast?.success('Shift saved successfully');
+        break_minutes: status === 'W' ? breakMinutes : 0,
+      });
+      toast?.success('Shift saved');
       onSaved?.();
       onClose();
     } catch (err) {
@@ -85,14 +98,14 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 p-6">
-          <Toggle label="Working day" checked={working} onChange={setWorking} />
-          {!working && (
-            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-              Marked as Weekly Off
+          {locked && (
+            <p className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-sm text-violet-200">
+              This cell is locked ({cell?.status === 'LEAVE' ? 'approved leave' : 'public holiday'}).
             </p>
           )}
+          <Toggle label="Working day" checked={working} onChange={setWorking} disabled={locked} />
 
-          {working && (
+          {working && !locked && (
             <>
               <Select label="Shift" value={shiftId} onChange={(e) => onShiftChange(e.target.value)}>
                 <option value="">Select shift</option>
@@ -101,24 +114,30 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
                 ))}
               </Select>
               <div className="grid grid-cols-2 gap-3">
-                <Input label="Shift Start" type="time" value={shiftStart} onChange={(e) => setShiftStart(e.target.value)} />
-                <Input label="Shift End" type="time" value={shiftEnd} onChange={(e) => setShiftEnd(e.target.value)} />
+                <Select label="Start (15 min)" value={shiftStart} onChange={(e) => setShiftStart(e.target.value)}>
+                  {TIME_SLOTS.map((t) => (
+                    <option key={`s-${t}`} value={t}>{t}</option>
+                  ))}
+                </Select>
+                <Select label="End (15 min)" value={shiftEnd} onChange={(e) => setShiftEnd(e.target.value)}>
+                  {TIME_SLOTS.map((t) => (
+                    <option key={`e-${t}`} value={t}>{t}</option>
+                  ))}
+                </Select>
               </div>
+              <Select label="Break" value={breakMinutes} onChange={(e) => setBreakMinutes(Number(e.target.value))}>
+                {BREAK_OPTIONS.map((b) => (
+                  <option key={b.value} value={b.value}>{b.label}</option>
+                ))}
+              </Select>
+              <p className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-sm font-mono text-[var(--text-primary)]">
+                {shiftStart} – {shiftEnd} | {BREAK_OPTIONS.find((b) => b.value === breakMinutes)?.label || 'None'} | {totalHours}h
+              </p>
               <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Mandatory Window</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <span className="text-xs text-[var(--text-secondary)]">Start</span>
-                    <p className="mt-1 flex items-center gap-2 font-mono text-sm text-[var(--text-primary)]">
-                      <Clock className="h-3.5 w-3.5 text-blue-400" /> {mandStart}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-xs text-[var(--text-secondary)]">End</span>
-                    <p className="mt-1 flex items-center gap-2 font-mono text-sm text-[var(--text-primary)]">
-                      <Clock className="h-3.5 w-3.5 text-blue-400" /> {mandEnd}
-                    </p>
-                  </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> {mandStart}</span>
+                  <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> {mandEnd}</span>
                 </div>
               </div>
             </>
@@ -126,13 +145,8 @@ export default function ShiftEditModal({ open, onClose, employee, date, cell, on
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button type="submit" variant="primary" disabled={saving}>
-              {saving ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  Saving…
-                </span>
-              ) : 'Save Changes'}
+            <Button type="submit" variant="primary" disabled={saving || locked}>
+              {saving ? 'Saving…' : 'Save Changes'}
             </Button>
           </div>
         </form>

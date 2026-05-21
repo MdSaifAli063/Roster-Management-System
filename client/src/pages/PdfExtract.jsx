@@ -15,6 +15,8 @@ export default function PdfExtract() {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [engine, setEngine] = useState(null);
+  const [reviewFields, setReviewFields] = useState({});
+  const [pushingFinance, setPushingFinance] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -63,6 +65,7 @@ export default function PdfExtract() {
         timeout: 300000,
       });
       setResult(data);
+      setReviewFields(data.invoice_fields || {});
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Extraction failed');
     } finally {
@@ -231,6 +234,57 @@ export default function PdfExtract() {
                 </Button>
               )}
             </div>
+          </Card>
+
+          <Card title="Invoice review → Finance">
+            <p className="mb-3 text-sm text-[var(--text-secondary)]">Confirm fields, then push to Finance Organiser.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {['supplier', 'invoice_number', 'invoice_date', 'due_date', 'subtotal', 'gst', 'total'].map((key) => (
+                <Input
+                  key={key}
+                  label={key.replace(/_/g, ' ')}
+                  value={reviewFields[key] || ''}
+                  onChange={(e) => setReviewFields({ ...reviewFields, [key]: e.target.value })}
+                />
+              ))}
+            </div>
+            <Button
+              className="mt-4"
+              variant="primary"
+              disabled={pushingFinance}
+              onClick={async () => {
+                setPushingFinance(true);
+                try {
+                  await api.post('/finance/from-extract', {
+                    job_id: result.job_id,
+                    fields: {
+                      supplier: reviewFields.supplier,
+                      invoice_number: reviewFields.invoice_number,
+                      invoice_date: reviewFields.invoice_date,
+                      due_date: reviewFields.due_date,
+                      subtotal: reviewFields.subtotal,
+                      gst: reviewFields.gst,
+                      total: reviewFields.total,
+                      line_items: reviewFields.line_items || [],
+                    },
+                  });
+                  alert('Saved to Finance Organiser');
+                  window.location.href = '/finance';
+                } catch (err) {
+                  const msg = err.response?.data?.error || err.message || 'Failed';
+                  if (err.response?.status === 401) {
+                    alert('Session expired. Please log in again.');
+                    window.location.href = '/login';
+                  } else {
+                    alert(msg);
+                  }
+                } finally {
+                  setPushingFinance(false);
+                }
+              }}
+            >
+              {pushingFinance ? 'Saving…' : 'Confirm & push to Finance'}
+            </Button>
           </Card>
 
           <Card title="Extracted text (preview)">

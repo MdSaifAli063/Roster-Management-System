@@ -19,6 +19,12 @@ const dashboardRoutes = require('./routes/dashboard');
 const calendarRoutes = require('./routes/calendar');
 const notificationRoutes = require('./routes/notifications');
 const pdfExtractRoutes = require('./routes/pdfExtract');
+const { ensureV2Schema } = require('./db/ensureV2Schema');
+const businessRoutes = require('./routes/business');
+const settingsRoutes = require('./routes/settings');
+const financeRoutes = require('./routes/finance');
+const staffRoutes = require('./routes/staff');
+const inboundEmailRoutes = require('./routes/inboundEmail');
 
 function buildCorsOptions() {
   const isProd = process.env.NODE_ENV === 'production';
@@ -44,8 +50,24 @@ function buildCorsOptions() {
   };
 }
 
+let schemaPromise = null;
+function schemaReady() {
+  if (!schemaPromise) {
+    schemaPromise = ensureV2Schema().catch((err) => {
+      console.warn('Schema ensure warning:', err.message);
+      schemaPromise = null;
+    });
+  }
+  return schemaPromise;
+}
+
 function createApp() {
   const app = express();
+
+  app.use(async (_req, _res, next) => {
+    await schemaReady();
+    next();
+  });
 
   app.use(cors(buildCorsOptions()));
   app.use(express.json());
@@ -67,6 +89,11 @@ function createApp() {
   app.use('/api/calendar', calendarRoutes);
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/pdf-extract', pdfExtractRoutes);
+  app.use('/api/business', businessRoutes);
+  app.use('/api/settings', settingsRoutes);
+  app.use('/api/finance', financeRoutes);
+  app.use('/api/staff', staffRoutes);
+  app.use('/api/inbound', inboundEmailRoutes);
 
   app.use((err, req, res, _next) => {
     console.error(err);

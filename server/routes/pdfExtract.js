@@ -4,7 +4,9 @@ const os = require('os');
 const path = require('path');
 const multer = require('multer');
 const { authenticate, requireStaff } = require('../middleware/auth');
+const { query } = require('../db');
 const { checkPythonAvailable, extractPdf } = require('../services/pdfExtract');
+const { checkFastApiHealth } = require('../services/pdfExtractHttp');
 
 const router = express.Router();
 router.use(authenticate);
@@ -27,8 +29,10 @@ const upload = multer({
 
 router.get('/status', async (_req, res) => {
   try {
+    const fastApi = await checkFastApiHealth();
+    if (fastApi.ok) return res.json(fastApi);
     const status = await checkPythonAvailable();
-    res.json(status);
+    res.json({ ...status, fastapi: fastApi });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
@@ -52,7 +56,18 @@ router.post('/extract', upload.single('file'), async (req, res) => {
       includeOcr,
       dpi,
     });
-    res.json(data);
+    let job_id = null;
+    try {
+      const { rows } = await query(
+        `INSERT INTO pdf_extract_jobs (filename, status, extracted_fields, created_by)
+         VALUES ($1, 'review', $2::jsonb, $3) RETURNING id`,
+        [req.file.originalname, JSON.stringify(data.invoice_fields || {}), req.user.id]
+      );
+      job_id = rows[0]?.id;
+    } catch (jobErr) {
+      console.warn('pdf_extract_jobs insert skipped:', jobErr.message);
+    }
+    res.json({ ...data, job_id, invoice_fields: data.invoice_fields || {} });
   } catch (err) {
     console.error('PDF extract error:', err.message);
     res.status(500).json({ error: err.message || 'PDF extraction failed' });

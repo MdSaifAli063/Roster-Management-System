@@ -50,7 +50,7 @@ function checkPythonAvailable() {
   });
 }
 
-function extractPdf(filePath, options = {}) {
+async function extractPdf(filePath, options = {}) {
   const {
     pages = 'all',
     includeTables = true,
@@ -58,6 +58,16 @@ function extractPdf(filePath, options = {}) {
     dpi = 200,
     timeoutMs = 300000,
   } = options;
+
+  if (process.env.PDF_API_URL || process.env.USE_PDF_API === 'true') {
+    try {
+      const { extractViaFastApi } = require('./pdfExtractHttp');
+      return await extractViaFastApi(filePath, { pages, includeTables, includeOcr, timeoutMs });
+    } catch (err) {
+      if (process.env.PDF_API_FALLBACK !== 'spawn') throw err;
+      console.warn('PDF API failed, falling back to spawn:', err.message);
+    }
+  }
 
   const python = resolvePython();
   const script = path.join(EXTRACTOR_ROOT, 'run_api.py');

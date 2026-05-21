@@ -90,7 +90,14 @@ export default function Dashboard() {
 
       const needAct = [];
       if (pendingLeave > 0) {
-        needAct.push({ title: 'Leave request pending approval', count: pendingLeave, urgent: true, to: '/leave', action: 'View', meta: 'Awaiting HR' });
+        needAct.push({
+          title: 'Leave request awaiting decision',
+          count: pendingLeave,
+          urgent: true,
+          to: '/leave',
+          action: 'View',
+          meta: 'Pending approval',
+        });
       }
       if (data.today?.status === 'W' && !data.todayAttendance?.punch_in) {
         needAct.push({ title: 'Mark attendance for today', count: 1, urgent: true, to: '/attendance', action: 'Mark In', meta: format(today, 'd MMM yyyy') });

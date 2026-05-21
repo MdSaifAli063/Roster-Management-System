@@ -11,6 +11,7 @@ const router = express.Router();
 router.use(authenticate);
 
 const { resolveEmployeeForUser } = require('../services/employeeLink');
+const { autoApproveIfEnabled, applyLeaveToRoster } = require('../services/leaveApproval');
 
 async function employeeIdForUser(user) {
   const employee = await resolveEmployeeForUser(user);
@@ -56,9 +57,10 @@ router.post('/', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5) RETURNING *`,
       [emp_id, start_date, end_date, leave_type, notes]
     );
-    const leave = rows[0];
+    let leave = rows[0];
     const { rows: empRows } = await query('SELECT * FROM employees WHERE id = $1', [emp_id]);
     const employee = empRows[0];
+    leave = (await autoApproveIfEnabled(leave, req.user.id)) || leave;
     await Promise.all([
       notifyLeaveSubmitted({ leave, employee }),
       notifyLeaveSubmittedRealtime({ leave, employee }),
@@ -78,6 +80,7 @@ router.put('/:id/approve', requireStaff, async (req, res) => {
     );
     if (!rows[0]) return res.status(404).json({ error: 'Not found' });
     const leave = rows[0];
+    await applyLeaveToRoster(leave);
     const { rows: empRows } = await query('SELECT * FROM employees WHERE id = $1', [leave.emp_id]);
     await Promise.all([
       notifyLeaveDecision({
@@ -126,6 +129,31 @@ router.put('/:id/reject', requireStaff, async (req, res) => {
     res.json(leave);
   } catch (err) {
     res.status(500).json({ error: 'Reject failed' });
+  }
+});
+
+router.get('/balances', async (req, res) => {
+  try {
+    let empId = req.query.emp_id;
+    if (req.user.role === 'EMPLOYEE') {
+      empId = await employeeIdForUser(req.user);
+    }
+    if (!empId) return res.status(400).json({ error: 'emp_id required' });
+    const { rows: emp } = await query(
+      'SELECT annual_leave_balance, sick_leave_balance FROM employees WHERE id = $1',
+      [empId]
+    );
+    const { rows: balances } = await query(
+      'SELECT * FROM leave_balances WHERE emp_id = $1',
+      [empId]
+    );
+    res.json({
+      annual: balances.find((b) => b.leave_type === 'ANNUAL')?.balance_days ?? emp[0]?.annual_leave_balance ?? 0,
+      sick: balances.find((b) => b.leave_type === 'SICK')?.balance_days ?? emp[0]?.sick_leave_balance ?? 0,
+      balances,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load balances' });
   }
 });
 

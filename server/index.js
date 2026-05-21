@@ -5,6 +5,7 @@ const { loadEnv } = require('./loadEnv');
 loadEnv();
 
 const { testConnection } = require('./db');
+const { ensureV2Schema } = require('./db/ensureV2Schema');
 const app = require('./app');
 const { setupClient } = require('./setupClient');
 const { initRealtime } = require('./realtime');
@@ -18,7 +19,8 @@ const protocol = httpsEnabled ? 'https' : 'http';
 async function start() {
   try {
     await testConnection();
-    console.log('Database connected');
+    await ensureV2Schema();
+    console.log('Database connected (schema v2 ensured)');
   } catch (err) {
     console.error('\n❌ Database connection failed:', err.message);
     console.error('   • Is PostgreSQL running?');

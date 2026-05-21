@@ -21,10 +21,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
+      setUser(null);
       setLoading(false);
       return;
     }
-    api.get('/auth/me')
+    api
+      .get('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => {
         setUser(res.data);
         localStorage.setItem('user', JSON.stringify(res.data));

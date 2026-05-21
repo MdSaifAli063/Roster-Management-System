@@ -8,7 +8,8 @@ import EmployeeFilterForm, { buildQuery } from '../components/EmployeeFilterForm
 
 export default function ManageRoster() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
+  const [createMode, setCreateMode] = useState(null);
   const [filters, setFilters] = useState({});
   const [employees, setEmployees] = useState([]);
   const [selected, setSelected] = useState(new Set());
@@ -43,6 +44,61 @@ export default function ManageRoster() {
     setSelected(next);
   };
 
+  const loadFromPrevious = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/rosters/previous-period', { params: { plant_id: filters.plant_id || undefined } });
+      if (!data.entries?.length) {
+        alert('No previous roster found. Use Start Blank or generate a roster first.');
+        setStep(0);
+        return;
+      }
+      const dates = data.entries.map((e) => e.roster_date?.slice?.(0, 10) || e.roster_date);
+      setStartDate(dates.sort()[0]);
+      setEndDate(dates.sort().slice(-1)[0]);
+      setSelected(new Set(data.entries.map((e) => e.emp_id)));
+      setCreateMode('previous');
+      setStep(2);
+      const p = await api.get('/shifts/patterns');
+      setPatterns(p.data);
+      setEmployees(await api.get('/employees', { params: buildQuery(filters) }).then((r) => r.data));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Could not load previous roster');
+      setStep(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startBlank = async () => {
+    setCreateMode('blank');
+    setStep(1);
+  };
+
+  const applyPreviousTemplate = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/rosters/previous-period', { params: { plant_id: filters.plant_id } });
+      for (const e of data.entries || []) {
+        await api.put(`/rosters/cell/${e.emp_id}/${e.roster_date?.slice?.(0, 10) || e.roster_date}`, {
+          status: e.status,
+          shift_id: e.shift_id,
+          shift_start: e.shift_start,
+          shift_end: e.shift_end,
+          mandatory_start: e.mandatory_start,
+          mandatory_end: e.mandatory_end,
+          break_minutes: e.break_minutes || 0,
+        });
+      }
+      alert('Previous roster copied — edit cells in View Roster');
+      navigate('/view-roster', { state: { startDate, endDate } });
+    } catch (err) {
+      alert(err.response?.data?.error || 'Copy failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const generate = async (andView) => {
     if (!selected.size || !startDate || !endDate || !patternId) {
       alert('Select employees, dates, and shift pattern');
@@ -72,7 +128,31 @@ export default function ManageRoster() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Manage Roster</h1>
+      <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Create Roster</h1>
+
+      {step === 0 && (
+        <Card title="How do you want to start?">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <button
+              type="button"
+              className="rounded-xl border border-[var(--border)] p-6 text-left transition hover:border-[var(--accent-primary)]"
+              onClick={loadFromPrevious}
+              disabled={loading}
+            >
+              <p className="font-semibold text-[var(--text-primary)]">Create from Previous Roster</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">Load last period as an editable template</p>
+            </button>
+            <button
+              type="button"
+              className="rounded-xl border border-[var(--border)] p-6 text-left transition hover:border-[var(--accent-primary)]"
+              onClick={startBlank}
+            >
+              <p className="font-semibold text-[var(--text-primary)]">Start Blank</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">Empty grid — pick employees and dates</p>
+            </button>
+          </div>
+        </Card>
+      )}
 
       {step === 1 && (
         <Card title="Step 1 — Employee Roster Search">
@@ -128,7 +208,10 @@ export default function ManageRoster() {
             </table>
           </div>
           <div className="mt-6 flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
+            <Button variant="secondary" onClick={() => setStep(createMode === 'blank' ? 1 : 0)}>Back</Button>
+            {createMode === 'previous' && (
+              <Button variant="secondary" disabled={loading} onClick={applyPreviousTemplate}>Copy previous cells</Button>
+            )}
             <Button variant="teal" disabled={loading} onClick={() => generate(true)}>Submit and View Roster</Button>
             <Button variant="primary" disabled={loading} onClick={() => generate(false)}>Submit and Exit</Button>
             <Button variant="ghost" onClick={() => navigate('/dashboard')}>Exit without Saving</Button>

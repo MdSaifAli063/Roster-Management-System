@@ -13,7 +13,7 @@ export function NotificationProvider({ children }) {
   const [connected, setConnected] = useState(false);
 
   const refresh = useCallback(async () => {
-    if (!user) return;
+    if (!user || !localStorage.getItem('token')) return;
     try {
       const [listRes, countRes] = await Promise.all([
         api.get('/notifications', { params: { limit: 30 } }),
@@ -22,8 +22,9 @@ export function NotificationProvider({ children }) {
       setNotifications(listRes.data);
       setUnreadCount(countRes.data.count || 0);
       setConnected(true);
-    } catch {
+    } catch (err) {
       setConnected(false);
+      if (err.response?.status === 401) return;
     }
   }, [user]);
 

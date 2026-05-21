@@ -34,14 +34,25 @@ async function logNotification(type, recipient, subject, payload, status) {
   }
 }
 
-async function sendEmail({ to, subject, html, text, type, payload }) {
+async function sendEmail({ to, subject, html, text, type, payload, attachments }) {
   const from = process.env.SMTP_FROM || 'RosterPro <noreply@roster.app>';
   const recipients = Array.isArray(to) ? to.filter(Boolean) : [to].filter(Boolean);
   if (!recipients.length) return { sent: false, reason: 'no_recipients' };
 
+  const mailAttachments = (attachments || []).map((a) => ({
+    filename: a.filename,
+    content: a.content,
+    contentType: a.contentType,
+  }));
+
   const transport = getTransporter();
   if (!transport) {
-    console.log('[email:dev]', { to: recipients, subject, text: text || html?.slice(0, 200) });
+    console.log('[email:dev]', {
+      to: recipients,
+      subject,
+      attachments: mailAttachments.map((a) => a.filename),
+      text: (text || html || '').slice(0, 200),
+    });
     await Promise.all(
       recipients.map((r) => logNotification(type || 'GENERIC', r, subject, payload, 'LOGGED_DEV'))
     );
@@ -55,6 +66,7 @@ async function sendEmail({ to, subject, html, text, type, payload }) {
       subject,
       text,
       html: html || `<p>${text}</p>`,
+      attachments: mailAttachments.length ? mailAttachments : undefined,
     });
     await Promise.all(
       recipients.map((r) => logNotification(type || 'GENERIC', r, subject, payload, 'SENT'))

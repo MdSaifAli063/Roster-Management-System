@@ -25,7 +25,8 @@ function requireRole(...roles) {
   };
 }
 
-const { STAFF_ROLES } = require('../constants/roles');
+const { STAFF_ROLES, EMPLOYER_ROLES } = require('../constants/roles');
 const requireStaff = requireRole(...STAFF_ROLES);
+const requireEmployer = requireRole(...EMPLOYER_ROLES);
 
-module.exports = { authenticate, requireRole, requireStaff };
+module.exports = { authenticate, requireRole, requireStaff, requireEmployer };

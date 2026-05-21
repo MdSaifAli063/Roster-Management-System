@@ -53,7 +53,11 @@ async function migrate() {
   await pool.query(
     'CREATE INDEX IF NOT EXISTS idx_user_notifications_user ON user_notifications(user_id, is_read, created_at DESC)'
   );
-  console.log('Database schema applied successfully.');
+
+  const v2 = fs.readFileSync(path.join(__dirname, 'migrations-v2.sql'), 'utf8');
+  await pool.query(v2);
+
+  console.log('Database schema applied successfully (v2 migrations included).');
   await pool.end();
 }
 

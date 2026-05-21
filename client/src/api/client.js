@@ -14,10 +14,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && !err.config?.url?.includes('/auth/login')) {
+    const url = err.config?.url || '';
+    const isAuthBootstrap = url.includes('/auth/me') || url.includes('/auth/login');
+    if (err.response?.status === 401 && !isAuthBootstrap) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      if (window.location.pathname !== '/login') {
+      const publicPaths = ['/', '/login'];
+      if (!publicPaths.includes(window.location.pathname)) {
         window.location.href = '/login';
       }
     }

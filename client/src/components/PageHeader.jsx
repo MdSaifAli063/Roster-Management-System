@@ -1,10 +1,12 @@
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { isEmployee } from '../lib/auth';
 
 const ROUTE_META = {
-  '/dashboard': { title: 'Dashboard', crumbs: ['Home', 'Dashboard'] },
+  '/dashboard': { title: 'Dashboard', crumbs: ['Home', 'Dashboard'], employeeTitle: 'My Dashboard', employeeCrumbs: ['Home', 'My Dashboard'] },
   '/manage-roster': { title: 'Manage Roster', crumbs: ['Roster', 'Manage'] },
-  '/view-roster': { title: 'View Roster', crumbs: ['Roster', 'View'] },
+  '/view-roster': { title: 'View Roster', crumbs: ['Roster', 'View'], employeeTitle: 'My Roster', employeeCrumbs: ['My work', 'My Roster'] },
   '/actual-roster': { title: 'Actual Roster', crumbs: ['Roster', 'Actual'] },
   '/employees': { title: 'Employees', crumbs: ['Masters', 'Employees'] },
   '/shifts': { title: 'Shifts', crumbs: ['Masters', 'Shifts'] },
@@ -12,20 +14,24 @@ const ROUTE_META = {
   '/holidays': { title: 'Holidays', crumbs: ['Holidays'] },
   '/reports': { title: 'Reports', crumbs: ['Reports'] },
   '/pdf-extract': { title: 'PDF Extract', crumbs: ['Tools', 'PDF Extract'] },
-  '/leave': { title: 'Leave', crumbs: ['Leave'] },
-  '/attendance': { title: 'Attendance', crumbs: ['Attendance'] },
+  '/leave': { title: 'Leave', crumbs: ['Leave'], employeeTitle: 'Apply Leave', employeeCrumbs: ['My work', 'Apply Leave'] },
+  '/attendance': { title: 'Attendance', crumbs: ['Attendance'], employeeTitle: 'My Attendance', employeeCrumbs: ['My work', 'Attendance'] },
   '/assignments': { title: 'Reassignment', crumbs: ['Masters', 'Reassignment'] },
   '/settings': { title: 'Settings', crumbs: ['Settings'] },
   '/profile': { title: 'Profile', crumbs: ['Profile'] },
 };
 
-export function usePageTitle(pathname) {
+export function usePageTitle(pathname, role) {
   const meta = ROUTE_META[pathname] || { title: 'RosterPro', crumbs: [] };
-  return meta;
+  if (isEmployee(role) && meta.employeeTitle) {
+    return { title: meta.employeeTitle, crumbs: meta.employeeCrumbs || meta.crumbs };
+  }
+  return { title: meta.title, crumbs: meta.crumbs };
 }
 
 export default function PageHeader({ pathname, subtitle, actions }) {
-  const { title, crumbs } = usePageTitle(pathname);
+  const { user } = useAuth();
+  const { title, crumbs } = usePageTitle(pathname, user?.role);
 
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

@@ -7,23 +7,40 @@ import { ThemeSelector } from '../components/ThemeToggle';
 import { useTheme } from '../context/ThemeContext';
 import { useNotifications } from '../context/NotificationContext';
 import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
+import { isEmployer } from '../lib/auth';
+import { Toggle } from '../components/ui/Input';
 
 export default function Settings() {
+  const { user } = useAuth();
   const location = useLocation();
   const { theme } = useTheme();
   const { notifications, unreadCount, markAllRead, clearAllNotifications } = useNotifications();
   const [emailStatus, setEmailStatus] = useState('checking…');
   const [clearingNotifs, setClearingNotifs] = useState(false);
+  const [autoApprove, setAutoApprove] = useState(false);
 
   useEffect(() => {
     api.get('/health').then(() => setEmailStatus('Configure SMTP on server (see DEPLOY.md)')).catch(() => setEmailStatus('API unreachable'));
-  }, []);
+    if (isEmployer(user?.role)) {
+      api.get('/settings').then((r) => setAutoApprove(!!r.data.auto_approve_leave)).catch(() => setAutoApprove(false));
+    }
+  }, [user?.role]);
+
+  const saveAutoApprove = async (val) => {
+    setAutoApprove(val);
+    await api.patch('/settings', { auto_approve_leave: val });
+  };
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <PageHeader
         pathname={location.pathname}
-        subtitle="Appearance and notification preferences"
+        subtitle={
+          isEmployer(user?.role)
+            ? 'Appearance, leave rules, and notifications'
+            : 'Theme and notification preferences'
+        }
       />
 
       <Card title="Appearance">
@@ -34,9 +51,24 @@ export default function Settings() {
         <ThemeSelector />
       </Card>
 
+      {isEmployer(user?.role) && (
+        <Card title="Leave management">
+          <Toggle
+            label="Auto-approve leave requests"
+            checked={autoApprove}
+            onChange={saveAutoApprove}
+          />
+          <p className="mt-2 text-xs text-[var(--text-secondary)]">
+            When enabled, new leave requests are approved automatically and roster cells are marked as Leave.
+          </p>
+        </Card>
+      )}
+
       <Card title="Notifications">
         <p className="text-sm text-[var(--text-secondary)]">
-          In-app alerts appear in the bell icon (leave, attendance, reassignments). Email alerts fire on the same events when SMTP is configured.
+          {isEmployer(user?.role)
+            ? 'In-app alerts appear in the bell icon (leave, attendance, reassignments). Email alerts fire when SMTP is configured.'
+            : 'You receive alerts when your leave is approved or rejected, and when your roster is published.'}
         </p>
         <p className="mt-3 text-sm text-[var(--text-secondary)]">
           You have <span className="font-medium text-[var(--text-primary)]">{notifications.length}</span> saved

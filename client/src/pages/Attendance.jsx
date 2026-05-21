@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { LogIn, LogOut, Clock } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import PageHeader from '../components/PageHeader';
 import MonthCalendar from '../components/MonthCalendar';
-import { useAuth } from '../context/AuthContext';
-import { ROLES } from '../lib/auth';
 import { formatTime } from '../lib/utils';
 import api from '../api/client';
 
 export default function Attendance() {
-  const { user } = useAuth();
+  const location = useLocation();
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth() + 1);
@@ -21,10 +20,6 @@ export default function Attendance() {
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
   const [selectedDate, setSelectedDate] = useState(today);
-
-  if (user?.role !== ROLES.EMPLOYEE) {
-    return <Navigate to="/actual-roster" replace />;
-  }
 
   const loadCalendar = useCallback((y, m) => {
     setCalLoading(true);
@@ -88,26 +83,26 @@ export default function Attendance() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Attendance</h1>
-          <p className="text-slate-500 dark:text-slate-400">
-            {data?.employee
-              ? `${data.employee.emp_name} · ${data.employee.emp_code}`
-              : format(today, 'EEEE, d MMMM yyyy')}
-          </p>
-        </div>
-        {canMark && (
-          <div className="flex gap-2">
-            <Button variant="teal" onClick={markIn} disabled={marking || !!att?.punch_in}>
-              <LogIn className="h-4 w-4" /> Mark In
-            </Button>
-            <Button variant="secondary" onClick={markOut} disabled={marking || !att?.punch_in}>
-              <LogOut className="h-4 w-4" /> Mark Out
-            </Button>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        pathname={location.pathname}
+        subtitle={
+          data?.employee
+            ? `${data.employee.emp_name} · ${data.employee.emp_code} — punch in/out for working days`
+            : format(today, 'EEEE, d MMMM yyyy')
+        }
+        actions={
+          canMark ? (
+            <>
+              <Button variant="teal" onClick={markIn} disabled={marking || !!att?.punch_in}>
+                <LogIn className="h-4 w-4" /> Mark In
+              </Button>
+              <Button variant="secondary" onClick={markOut} disabled={marking || !att?.punch_in}>
+                <LogOut className="h-4 w-4" /> Mark Out
+              </Button>
+            </>
+          ) : null
+        }
+      />
 
       {loading ? (
         <div className="flex min-h-[120px] items-center justify-center">

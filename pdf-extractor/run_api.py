@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
 from extractor import run_extraction  # noqa: E402
+from extractor.invoice_fields import extract_invoice_fields  # noqa: E402
 from extractor.utils import open_pdf_safe, parse_page_spec  # noqa: E402
 
 
@@ -42,6 +43,7 @@ def main() -> int:
             include_ocr=not args.no_ocr,
             dpi=args.dpi,
         )
+        data["invoice_fields"] = extract_invoice_fields(data)
         json.dump(data, sys.stdout, ensure_ascii=False, default=str)
         return 0
     except Exception as exc:

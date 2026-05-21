@@ -3,21 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
-import { isStaff } from '../lib/auth';
+import { isEmployer } from '../lib/auth';
 
 const ALL_ITEMS = [
-  { label: 'Dashboard', to: '/dashboard', k: 'dashboard' },
-  { label: 'Manage Roster', to: '/manage-roster', staff: true },
-  { label: 'View Roster', to: '/view-roster' },
-  { label: 'Actual Roster', to: '/actual-roster', staff: true },
+  { label: 'Dashboard', to: '/dashboard' },
+  { label: 'Create Roster', to: '/manage-roster', employer: true },
+  { label: 'View Roster', to: '/view-roster', employer: true },
+  { label: 'My Roster', to: '/view-roster', employee: true },
+  { label: 'Apply Leave', to: '/leave', employee: true },
+  { label: 'Leave Approvals', to: '/leave', employer: true },
   { label: 'Attendance', to: '/attendance', employee: true },
-  { label: 'Employees', to: '/employees', staff: true },
-  { label: 'Shifts', to: '/shifts', staff: true },
-  { label: 'Holidays', to: '/holidays', staff: true },
-  { label: 'Plants', to: '/plants', staff: true },
-  { label: 'Leave', to: '/leave' },
-  { label: 'Reports', to: '/reports', staff: true },
-  { label: 'PDF Extract', to: '/pdf-extract', staff: true },
+  { label: 'Actual Roster', to: '/actual-roster', employer: true },
+  { label: 'Staff', to: '/staff', employer: true },
+  { label: 'Holidays', to: '/holidays', employer: true },
+  { label: 'Reports', to: '/reports', employer: true },
+  { label: 'PDF Extractor', to: '/pdf-extractor', employer: true },
+  { label: 'Finance', to: '/finance', employer: true },
   { label: 'Settings', to: '/settings' },
   { label: 'Profile', to: '/profile' },
 ];
@@ -27,16 +28,16 @@ export default function CommandPalette({ open, onClose }) {
   const [idx, setIdx] = useState(0);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const staff = isStaff(user?.role);
+  const employer = isEmployer(user?.role);
 
   const items = useMemo(() => {
     return ALL_ITEMS.filter((item) => {
-      if (item.staff && !staff) return false;
-      if (item.employee && staff) return false;
+      if (item.employer && !employer) return false;
+      if (item.employee && employer) return false;
       if (!q) return true;
       return item.label.toLowerCase().includes(q.toLowerCase());
     });
-  }, [q, staff]);
+  }, [q, employer]);
 
   useEffect(() => {
     if (!open) {

@@ -9,8 +9,11 @@ export default function Holidays() {
   const [holidays, setHolidays] = useState([]);
   const [plants, setPlants] = useState([]);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [form, setForm] = useState({ holiday_date: '', holiday_name: '', plant_id: '', is_national: false });
+  const [form, setForm] = useState({ holiday_date: '', holiday_name: '', plant_id: '', is_national: false, is_paid: true });
   const [bulkText, setBulkText] = useState('');
+  const [country, setCountry] = useState('AU');
+  const [publicList, setPublicList] = useState([]);
+  const [paidDefault, setPaidDefault] = useState(true);
 
   const load = () => {
     api.get('/holidays', { params: { year } }).then((r) => setHolidays(r.data));
@@ -26,7 +29,7 @@ export default function Holidays() {
       ...form,
       plant_id: form.is_national ? null : form.plant_id || null,
     });
-    setForm({ holiday_date: '', holiday_name: '', plant_id: '', is_national: false });
+    setForm({ holiday_date: '', holiday_name: '', plant_id: '', is_national: false, is_paid: true });
     load();
   };
 
@@ -44,6 +47,17 @@ export default function Holidays() {
     });
     await api.post('/holidays/import', { holidays: items });
     setBulkText('');
+    load();
+  };
+
+  const fetchPublic = async () => {
+    const { data } = await api.get('/holidays/fetch-public', { params: { country, year } });
+    setPublicList(data);
+  };
+
+  const savePublic = async () => {
+    await api.post('/holidays/save-public', { holidays: publicList, is_paid_default: paidDefault });
+    setPublicList([]);
     load();
   };
 
@@ -71,8 +85,38 @@ export default function Holidays() {
                 {plants.map((p) => <option key={p.id} value={p.id}>{p.plant_name}</option>)}
               </Select>
             )}
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={form.is_paid} onChange={(e) => setForm({ ...form, is_paid: e.target.checked })} />
+              Paid holiday
+            </label>
             <Button type="submit" variant="teal">Add</Button>
           </form>
+        </Card>
+
+        <Card title="Import public holidays (Nager API)">
+          <div className="flex flex-wrap gap-2">
+            <Input label="Country" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} placeholder="AU" />
+            <label className="flex items-center gap-2 self-end text-sm">
+              <input type="checkbox" checked={paidDefault} onChange={(e) => setPaidDefault(e.target.checked)} />
+              Mark as paid
+            </label>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <Button variant="secondary" onClick={fetchPublic}>Fetch {year}</Button>
+            {publicList.length > 0 && (
+              <Button variant="primary" onClick={savePublic}>Save {publicList.length} holidays</Button>
+            )}
+          </div>
+          {publicList.length > 0 && (
+            <ul className="mt-3 max-h-40 overflow-y-auto text-xs">
+              {publicList.map((h, i) => (
+                <li key={i} className="flex justify-between border-b border-[var(--border)] py-1">
+                  <span>{h.holiday_date}</span>
+                  <span>{h.holiday_name}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
 
         <Card title="Bulk Import (CSV)">
@@ -93,7 +137,7 @@ export default function Holidays() {
         </Select>
       }>
         <table className="min-w-full text-sm">
-          <thead><tr className="border-b text-left text-slate-500"><th className="p-2">Date</th><th className="p-2">Name</th><th className="p-2">Plant</th><th className="p-2">National</th><th /></tr></thead>
+          <thead><tr className="border-b text-left text-slate-500"><th className="p-2">Date</th><th className="p-2">Name</th><th className="p-2">Plant</th><th className="p-2">National</th><th className="p-2">Paid</th><th /></tr></thead>
           <tbody>
             {holidays.map((h) => (
               <tr key={h.id} className="border-b dark:border-slate-800">
@@ -101,6 +145,7 @@ export default function Holidays() {
                 <td className="p-2">{h.holiday_name}</td>
                 <td className="p-2">{h.plant_name || '—'}</td>
                 <td className="p-2">{h.is_national ? 'Yes' : 'No'}</td>
+                <td className="p-2">{h.is_paid !== false ? 'Paid' : 'Unpaid'}</td>
                 <td className="p-2"><button type="button" onClick={() => remove(h.id)} className="text-red-500"><Trash2 className="h-4 w-4" /></button></td>
               </tr>
             ))}

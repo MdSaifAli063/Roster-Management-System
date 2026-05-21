@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
-import { Menu, Search, LayoutDashboard, Calendar, Users, Settings } from 'lucide-react';
+import { Menu, Search, LayoutDashboard, Calendar, Plane, CalendarCheck, UserCircle } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import UserMenu from './UserMenu';
 import Sidebar from './Sidebar';
@@ -8,13 +8,21 @@ import CommandPalette from './CommandPalette';
 import { ThemeToggleButton } from './ThemeToggle';
 import { usePageTitle } from './PageHeader';
 import { useAuth } from '../context/AuthContext';
+import { isEmployer } from '../lib/auth';
 import { cn } from '../lib/utils';
 
-const MOBILE_TABS = [
+const EMPLOYER_MOBILE_TABS = [
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
+  { to: '/manage-roster', icon: Calendar, label: 'Create' },
+  { to: '/staff', icon: UserCircle, label: 'Staff' },
+  { to: '/leave', icon: Plane, label: 'Leave' },
+];
+
+const EMPLOYEE_MOBILE_TABS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
   { to: '/view-roster', icon: Calendar, label: 'Roster' },
-  { to: '/employees', icon: Users, label: 'People', staff: true },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/leave', icon: Plane, label: 'Leave' },
+  { to: '/attendance', icon: CalendarCheck, label: 'Attend' },
 ];
 
 export default function Layout() {
@@ -63,8 +71,8 @@ export default function Layout() {
     }
   };
 
-  const staff = user?.role !== 'EMPLOYEE';
-  const mobileTabs = MOBILE_TABS.filter((t) => !t.staff || staff);
+  const employer = isEmployer(user?.role);
+  const mobileTabs = employer ? EMPLOYER_MOBILE_TABS : EMPLOYEE_MOBILE_TABS;
 
   return (
     <div className="mesh-bg flex h-screen h-[100dvh] overflow-hidden bg-[var(--bg-primary)]">

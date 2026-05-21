@@ -4,7 +4,7 @@ import ShiftBadge from './ShiftBadge';
 import { cn } from '../lib/utils';
 import { AlertTriangle, Pencil } from 'lucide-react';
 
-export default function RosterGrid({ employees, dates, rosterMap, onCellClick, readOnly, showMismatchLegend = false }) {
+export default function RosterGrid({ employees, dates, rosterMap, onCellClick, readOnly = false, showMismatchLegend = false }) {
   return (
     <div className="glass-card overflow-hidden">
       <div className="overflow-x-auto roster-scroll">
@@ -61,23 +61,24 @@ export default function RosterGrid({ employees, dates, rosterMap, onCellClick, r
                       key={key}
                       title={mismatch ? cell.message : undefined}
                       className={cn(
-                        'relative border-l border-[var(--border)] px-1 py-1 text-center transition-all duration-200',
+                        'relative min-w-[88px] border-l border-[var(--border)] px-1 py-1 text-center transition-all duration-200 sm:min-w-[100px]',
                         weekend && 'bg-black/10',
                         todayCol && 'border-l-2 border-l-blue-500/60 bg-blue-500/[0.03]',
                         !readOnly && 'cursor-pointer hover:scale-[1.02] hover:z-10 hover:shadow-[0_0_12px_rgba(59,130,246,0.3)]',
                         status === 'W' && !mismatch && 'bg-emerald-500/10',
                         status === 'WO' && !mismatch && 'bg-amber-500/10',
-                        status === 'H' && !mismatch && 'bg-red-500/10',
+                        (status === 'H' || status === 'PH') && !mismatch && 'bg-red-500/10',
+                        status === 'LEAVE' && !mismatch && 'bg-violet-500/10',
                         mismatch && 'bg-purple-500/15 ring-2 ring-inset ring-purple-400/50'
                       )}
-                      onClick={() => !readOnly && onCellClick?.(emp, format(d, 'yyyy-MM-dd'), cell)}
+                      onClick={() => !readOnly && status !== 'LEAVE' && status !== 'H' && status !== 'PH' && onCellClick?.(emp, format(d, 'yyyy-MM-dd'), cell)}
                     >
                       {!readOnly && (
                         <Pencil className="absolute right-1 top-1 h-3 w-3 text-blue-400 opacity-0 transition-opacity group-hover:opacity-0 hover:opacity-100" />
                       )}
                       {mismatch && <AlertTriangle className="absolute right-0.5 top-0.5 h-3 w-3 text-purple-400" aria-hidden />}
                       {cell && (cell.status || cell.shift_start) ? (
-                        <ShiftBadge status={cell.status} shiftStart={cell.shift_start} shiftEnd={cell.shift_end} />
+                        <ShiftBadge cell={cell} />
                       ) : cell?.mismatch ? (
                         <span className="text-xs text-purple-300">!</span>
                       ) : (
@@ -94,7 +95,9 @@ export default function RosterGrid({ employees, dates, rosterMap, onCellClick, r
       <div className="flex flex-wrap gap-4 border-t border-[var(--border)] px-4 py-3 text-xs text-[var(--text-secondary)]">
         <span><span className="font-semibold text-emerald-400">W</span> Working</span>
         <span><span className="font-semibold text-amber-400">WO</span> Weekly Off</span>
-        <span><span className="font-semibold text-red-400">H</span> Holiday</span>
+        <span><span className="font-semibold text-red-400">PH</span> Public holiday</span>
+        <span><span className="font-semibold text-violet-400">Leave</span> Approved leave</span>
+        <span className="font-mono text-[10px] text-emerald-400/90">W cells: 09:00 – 17:00 | 30m | 7.5h</span>
         {showMismatchLegend && (
           <span><span className="font-semibold text-purple-400">▲</span> Mismatch</span>
         )}
