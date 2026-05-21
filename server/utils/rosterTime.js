@@ -38,6 +38,17 @@ function formatBreakLabel(minutes) {
   return `${m}m`;
 }
 
+function sqlTimeOrNull(value) {
+  if (value == null || value === '') return null;
+  return String(value).slice(0, 8);
+}
+
+function sqlShiftIdOrNull(value) {
+  if (value == null || value === '' || value === 0) return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 function formatCellDisplay(shiftStart, shiftEnd, breakMinutes, totalHours) {
   if (!shiftStart || !shiftEnd) return null;
   const start = String(shiftStart).slice(0, 5);
@@ -55,4 +66,6 @@ module.exports = {
   computeTotalHours,
   formatBreakLabel,
   formatCellDisplay,
+  sqlTimeOrNull,
+  sqlShiftIdOrNull,
 };
