@@ -1,7 +1,7 @@
 const express = require('express');
 const { query } = require('../db');
 const { authenticate, requireStaff, requireEmployer } = require('../middleware/auth');
-const { computeTotalHours } = require('../utils/rosterTime');
+const { computeTotalHours, sqlTimeOrNull, sqlShiftIdOrNull } = require('../utils/rosterTime');
 const { sendRosterEmails } = require('../services/rosterPublish');
 const { ROLES } = require('../constants/roles');
 const { resolveEmployeeForUser } = require('../services/employeeLink');
@@ -219,9 +219,11 @@ router.put('/cell/:empId/:date', requireStaff, async (req, res) => {
     const { empId, date } = req.params;
     const b = req.body;
     const breakMinutes = Number(b.break_minutes) || 0;
+    const shiftStart = sqlTimeOrNull(b.shift_start);
+    const shiftEnd = sqlTimeOrNull(b.shift_end);
     const totalHours =
-      b.status === 'W' && b.shift_start && b.shift_end
-        ? computeTotalHours(b.shift_start, b.shift_end, breakMinutes)
+      b.status === 'W' && shiftStart && shiftEnd
+        ? computeTotalHours(shiftStart, shiftEnd, breakMinutes)
         : 0;
     const { rows } = await query(
       `INSERT INTO rosters (emp_id, roster_date, status, shift_id, shift_start, shift_end, mandatory_start, mandatory_end, break_minutes, total_hours, is_manual_override, assigned_by)
@@ -236,11 +238,11 @@ router.put('/cell/:empId/:date', requireStaff, async (req, res) => {
         empId,
         date,
         b.status,
-        b.shift_id,
-        b.shift_start,
-        b.shift_end,
-        b.mandatory_start,
-        b.mandatory_end,
+        sqlShiftIdOrNull(b.shift_id),
+        shiftStart,
+        shiftEnd,
+        sqlTimeOrNull(b.mandatory_start),
+        sqlTimeOrNull(b.mandatory_end),
         breakMinutes,
         totalHours,
         req.user.id,
@@ -248,6 +250,7 @@ router.put('/cell/:empId/:date', requireStaff, async (req, res) => {
     );
     res.json(rows[0]);
   } catch (err) {
+    console.error('PUT /rosters/cell', err.message);
     res.status(500).json({ error: 'Cell update failed' });
   }
 });
