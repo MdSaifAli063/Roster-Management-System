@@ -208,17 +208,18 @@ Max upload enforced in route; timeout ~5 minutes for large files.
 
 | Role | Icon | Typical user | Access |
 |------|------|--------------|--------|
-| **ADMIN** | 🛡️ | System owner | All staff routes + user management |
+| **ADMIN** | 🛡️ | System owner | All employer routes + user management |
 | **HR_USER** | 📋 | HR team | Roster, employees, shifts, holidays, reports, PDF |
-| **TRAINING_MANAGER** | 🎓 | Training lead | Same staff routes as HR (training use case) |
-| **EMPLOYEE** | 👤 | Shop-floor / office staff | Dashboard, view roster, leave, attendance, profile |
+| **TRAINING_MANAGER** | 🎓 | Training lead | Same employer routes as HR (training use case) |
+| **EMPLOYER** | 🏢 | Business owner / HR lead | Full employer portal (onboarding, publish, finance) |
+| **EMPLOYEE** | 👤 | Shop-floor / office staff | My roster, leave, attendance, profile (read-only roster) |
 
 **Enforcement:**
 
-- **Frontend:** `ProtectedRoute` (must be logged in), `StaffRoute` (must be in `STAFF_ROLES` from `server/constants/roles.js`).
-- **Backend:** `authenticate` middleware on almost all routes; `requireStaff` on writes to master data and roster generation.
+- **Frontend:** `ProtectedRoute`, `EmployerRoute` / `StaffRoute`, `EmployeeRoute` (from `server/constants/roles.js`).
+- **Backend:** `authenticate` on almost all routes; `requireEmployer` / `requireStaff` on employer writes (roster, masters, publish).
 
-**Signup** (`POST /api/auth/signup`) allows roles: `EMPLOYEE`, `HR_USER`, `TRAINING_MANAGER` — not self-service ADMIN.
+**Signup** (`POST /api/auth/signup`) allows roles: `EMPLOYEE`, `EMPLOYER` — not self-service ADMIN.
 
 ---
 
@@ -352,42 +353,178 @@ erDiagram
 
 ## 🛠 Tech stack
 
-### Frontend (`client/`)
+Full technology map for the **RosterPro** monorepo (`client/` + `server/` + `pdf-extractor/` + optional `pdf-extractor-api/`).
 
-| Tech | Purpose |
+### At a glance
+
+| Layer | Technologies |
+|-------|----------------|
+| **Frontend** | React 19, Vite 8, Tailwind CSS 4, React Router 7, Axios |
+| **Backend** | Node.js 20, Express 5, PostgreSQL (`pg`), JWT, Socket.IO |
+| **Documents** | Python 3 (pdfplumber, PyMuPDF, Camelot, Tesseract), PDFKit, SheetJS (`xlsx`) |
+| **Optional PDF API** | FastAPI + Uvicorn (`pdf-extractor-api/`) |
+| **Deploy** | Docker, Google Cloud Run, Vercel, Render |
+| **Data** | PostgreSQL 14+ (Neon, Cloud SQL, or local) |
+
+---
+
+### Frontend — `client/`
+
+| Category | Technology | Version (approx.) | Role in this project |
+|----------|------------|-------------------|----------------------|
+| **Runtime** | Node.js | 20+ | Build toolchain only |
+| **UI library** | React | 19.x | SPA components, hooks, context providers |
+| **DOM** | react-dom | 19.x | Client rendering |
+| **Bundler / dev** | Vite | 8.x | HMR, production build to `dist/` |
+| **React plugin** | `@vitejs/plugin-react` | 6.x | Fast Refresh, JSX |
+| **Routing** | react-router-dom | 7.x | Protected routes, employer vs employee portals |
+| **HTTP** | Axios | 1.x | API client + JWT interceptor (`api/client.js`) |
+| **Styling** | Tailwind CSS | 4.x | Utilities + `@theme` design tokens |
+| **Tailwind integration** | `@tailwindcss/vite` | 4.x | Vite-native Tailwind pipeline |
+| **Class utilities** | clsx, tailwind-merge | 2.x / 3.x | Conditional + merged class names (`lib/utils.js`) |
+| **Icons** | lucide-react | 1.x | Sidebar, roster, finance, landing UI |
+| **Dates** | date-fns | 4.x | Formatting, relative times in notifications |
+| **Fonts (Google)** | Plus Jakarta Sans, DM Sans, JetBrains Mono | — | Display, body, roster cell mono (`index.html`) |
+| **Lint** | ESLint 10 + react-hooks / react-refresh plugins | — | `npm run lint` in client |
+| **Deploy helper** | `scripts/prepare-vercel.mjs` | — | Vercel-oriented build prep |
+
+**Frontend patterns:** Context API (`Auth`, `Theme`, `Notification`, `Toast`), role guards (`ProtectedRoute`, `EmployerRoute`, `EmployeeRoute`), responsive layout + mobile bottom nav, dark/light theme via CSS variables, command palette (`Ctrl`/`⌘`+`K`), landing page with 3D mockup animations.
+
+---
+
+### Backend — `server/`
+
+| Category | Technology | Version (approx.) | Role in this project |
+|----------|------------|-------------------|----------------------|
+| **Runtime** | Node.js | 20+ | API server (`index.js`, `app.js`) |
+| **Framework** | Express | 5.x | REST API, static/Vite middleware, CORS |
+| **Database driver** | `pg` (node-postgres) | 8.x | Connection pool, SQL queries |
+| **Database** | PostgreSQL | 14+ | All app data (`db/schema.sql`, migrations) |
+| **Auth** | jsonwebtoken | 9.x | JWT issue/verify (`middleware/auth.js`) |
+| **Passwords** | bcryptjs | 3.x | Login / signup hashing |
+| **Cookies** | cookie-parser | 1.x | Optional cookie-based session support |
+| **CORS** | cors | 2.x | Cross-origin config for split deploys |
+| **Env** | dotenv | 16.x | `server/.env` loading (`loadEnv.js`) |
+| **Realtime** | socket.io | 4.x | Optional push when `ENABLE_SOCKET=true` |
+| **Email** | nodemailer | 8.x | Leave, roster publish, credential emails |
+| **Uploads** | multer | 2.x | PDF upload to temp files |
+| **Excel export** | xlsx (SheetJS) | 0.18.x | Roster & report `.xlsx` downloads |
+| **PDF generation** | PDFKit | 0.17.x | Server-side roster/report PDFs (`reportExport.js`) |
+| **Dev** | nodemon, cross-env | 3.x / 10.x | Hot reload; `NODE_ENV`, HTTPS flags |
+| **Local HTTPS** | selfsigned | 2.x | `npm run dev:https` |
+| **Process** | Native `fetch` (Node 18+) | — | Nager holidays API, optional FastAPI PDF service |
+
+**Backend architecture:** Feature routers under `routes/`, business logic in `services/` (roster publish, leave approval, attendance matcher, email, PDF extract orchestration), `constants/roles.js` for **EMPLOYER** vs **EMPLOYEE** access, `db/migrate.js` + `migrations-v2.sql` for schema evolution.
+
+---
+
+### Python — document extraction
+
+Two integration modes (production Docker uses **spawn**; dev can use **FastAPI** sidecar).
+
+#### `pdf-extractor/` (bundled in Docker / CLI)
+
+| Package | Purpose |
+|---------|---------|
+| **Python** | 3.9+ (3.x in Debian Docker image) |
+| **pdfplumber** | Primary text + table extraction |
+| **PyMuPDF** (`fitz`) | Fallback text extraction |
+| **pdfminer.six** | Additional PDF text parsing |
+| **camelot-py** | Table detection on line-based PDFs |
+| **pytesseract** + **Tesseract OCR** | Scanned-page text (system binary in Docker) |
+| **pdf2image** + **Poppler** | Page rasterization for OCR |
+| **Pillow** | Image handling |
+| **pandas** | Table data structures |
+| **opencv-python-headless** | Image preprocessing for OCR/tables |
+| **Entry** | `run_api.py` (stdout JSON for Node), `main.py` (CLI) |
+
+#### `pdf-extractor-api/` (optional microservice)
+
+| Package | Purpose |
+|---------|---------|
+| **FastAPI** | HTTP `/extract`, `/health` |
+| **Uvicorn** | ASGI server |
+| **python-multipart** | Upload handling |
+
+Configured via `PDF_API_URL` (default `http://127.0.0.1:8001`); Node falls back to spawned `run_api.py` when unavailable.
+
+---
+
+### External APIs & integrations
+
+| Service | Used for |
+|---------|----------|
+| **[Nager.Date API](https://date.nager.at)** | Public holidays by country/year (`services/publicHolidays.js`) |
+| **Google Calendar iCal** | India holiday fallback feed |
+| **SMTP** (any provider) | Transactional email via nodemailer (Mailtrap, Gmail, etc.) |
+| **Inbound email webhook** | Stub route for invoice PDF ingestion (`routes/inboundEmail.js`) |
+
+---
+
+### Database & persistence
+
+| Item | Details |
 |------|---------|
-| ⚛️ React 19 | UI components & hooks |
-| ⚡ Vite 8 | Dev HMR + production bundle |
-| 🎨 Tailwind CSS 4 | Utility styling + `@theme` variables |
-| 🧭 React Router 7 | SPA routes in `App.jsx` |
-| 📡 Axios | API (`client/src/api/client.js`) |
-| 🎯 Lucide React | Icons |
-| 📅 date-fns | Relative timestamps in notifications |
+| **Engine** | PostgreSQL |
+| **Schema** | `server/db/schema.sql` + `migrations-v2.sql` |
+| **Migrations** | `npm run db:migrate` → `migrate.js`, `ensureV2Schema.js` |
+| **Seed** | `npm run db:seed` — demo users, plants, employees, rosters |
+| **Hosting** | Neon, Google Cloud SQL, or local Postgres |
+| **SSL** | `DATABASE_SSL=true` for managed cloud DBs |
 
-### Backend (`server/`)
+**Major domains:** users, employees, plants, shifts, shift_patterns, rosters (15‑min slots, breaks, publish status), holidays, leave, attendance, work_assignments, notifications, finance_invoices, business/onboarding settings.
 
-| Tech | Purpose |
-|------|---------|
-| 🟢 Express 5 | HTTP API (`app.js` factory for Vercel too) |
-| 🐘 `pg` | PostgreSQL pool (`db/index.js`) |
-| 🔑 jsonwebtoken + bcryptjs | Auth |
-| 📧 nodemailer | Email |
-| 📊 xlsx | Report downloads |
-| 🔌 socket.io | Optional push (local/Render) |
-| 📎 multer | PDF uploads |
+---
 
-### PDF (`pdf-extractor/`)
+### DevOps, hosting & tooling
 
-Python 3.9+, pdfplumber, PyMuPDF, pdfminer.six, camelot-py, pytesseract, pandas, opencv-headless.
+| Category | Technology | Role |
+|----------|------------|------|
+| **Container** | Docker multi-stage | Node 20 Alpine (client build) + Node 20 Bookworm (API + Python + Tesseract) |
+| **Production (primary)** | Google Cloud Run | `gcr.io/.../roster-app`, region `asia-south1` |
+| **Build** | Google Cloud Build | `gcloud builds submit` |
+| **Alt frontend/API** | Vercel | `vercel.json`, `api/index.js` serverless handler |
+| **Alt PaaS** | Render | `render.yaml` |
+| **Version control** | Git | Monorepo |
+| **Package manager** | npm | Root + `server/` + `client/` workspaces via scripts |
+| **OS packages (Docker)** | tesseract-ocr, poppler-utils | OCR + PDF rasterization |
 
-### Infrastructure
+**Production container env (typical):** `NODE_ENV=production`, `PORT=8080`, `ENABLE_SOCKET=false`, `PYTHON_PATH=python3`, `PDF_EXTRACTOR_ROOT=/app/pdf-extractor`.
 
-| Platform | Notes |
-|----------|-------|
-| ☁️ **Cloud Run** | **Recommended** — `Dockerfile` multi-stage build |
-| ▲ **Vercel** | `api/index.js` serverless wrapper; no Socket.IO |
-| 🟣 **Render** | `render.yaml` optional API host |
-| 💾 **Neon / Cloud SQL** | Managed Postgres |
+---
+
+### Root monorepo — `package.json`
+
+Shared scripts orchestrate both apps:
+
+| Script | Action |
+|--------|--------|
+| `npm run install:all` | Install `server` + `client` dependencies |
+| `npm run dev` | Express + Vite middleware on one port |
+| `npm run dev:https` | Local HTTPS dev |
+| `npm run build` | Production React build |
+| `npm run start` | Build client + run Express with static files |
+| `npm run db:migrate` / `db:seed` | Database setup |
+
+Root also lists core server deps for Vercel bundling (`express`, `pg`, `jsonwebtoken`, etc.).
+
+---
+
+### Feature ↔ stack mapping (quick reference)
+
+| Product area | Primary stack |
+|--------------|----------------|
+| Landing & app UI | React, Tailwind, Vite, Lucide |
+| Auth & roles | JWT, bcrypt, employer/employee route guards |
+| Roster grid & timeline editor | React, date-fns, 15‑min slot logic (`rosterTime.js`) |
+| Publish roster + email attachments | Express, xlsx, PDFKit, nodemailer |
+| Reports | Express, xlsx, PDFKit |
+| Holidays | PostgreSQL, Nager API, CSV import |
+| Leave & attendance | PostgreSQL, email, mismatch engine (Node) |
+| Finance organiser | PostgreSQL, PDF extract → `finance_invoices` |
+| Onboarding wizard | React wizard + `POST /api/business/onboarding` |
+| PDF extractor UI | React, multer, Python or FastAPI |
+| Notifications | PostgreSQL polling (+ Socket.IO optional) |
 
 ---
 
@@ -488,6 +625,7 @@ Roster Website/
 │   ├── extractor/          # Python modules
 │   ├── run_api.py          # Node integration entry
 │   └── main.py             # CLI for local testing
+├── pdf-extractor-api/      # Optional FastAPI sidecar (PDF_API_URL)
 ├── api/index.js            # Vercel serverless handler
 ├── Dockerfile              # Cloud Run: Node + Python + Tesseract
 ├── DEPLOY-GCP.md           # Primary deploy guide
@@ -728,5 +866,5 @@ Private / internal use — adjust for your organization.
 
 <p align="center">
   <strong>RosterPro</strong> — plan shifts · track attendance · notify teams · extract PDFs<br/>
-  <sub>Built with React, Express, PostgreSQL, and Python</sub>
+  <sub>React 19 · Vite 8 · Tailwind 4 · Express 5 · PostgreSQL · Python · Docker · Cloud Run</sub>
 </p>
