@@ -1,7 +1,7 @@
 import { NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard, Calendar, CalendarDays, CalendarCheck, Palmtree, FileBarChart, FileText,
-  Settings, Eye, Plane, UserCircle, X, LogOut, ChevronLeft, Pencil, Wallet, UserCog,
+  Settings, Eye, Plane, UserCircle, X, LogOut, ChevronLeft, Pencil, Wallet, UserCog, CreditCard, Tag,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
@@ -44,6 +44,8 @@ const employerSections = [
       { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
       { to: '/profile', icon: UserCircle, label: 'Profile' },
       { to: '/settings', icon: Settings, label: 'Settings' },
+      { to: '/settings/billing', icon: CreditCard, label: 'Billing' },
+      { to: '/pricing', icon: Tag, label: 'Pricing' },
     ],
   },
 ];
