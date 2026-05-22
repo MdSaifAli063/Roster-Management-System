@@ -37,6 +37,22 @@ async function ensureV2Schema() {
     throw err;
   }
 
+  const subsPath = path.join(__dirname, 'migrations-subscriptions.sql');
+  if (fs.existsSync(subsPath)) {
+    const subsSql = stripLineComments(fs.readFileSync(subsPath, 'utf8'));
+    try {
+      await query(subsSql);
+    } catch (err) {
+      console.warn('subscriptions migration:', err.message?.slice(0, 200));
+    }
+    try {
+      const { seedSubscriptionPlans } = require('../services/subscription');
+      await seedSubscriptionPlans();
+    } catch (err) {
+      console.warn('seedSubscriptionPlans:', err.message?.slice(0, 120));
+    }
+  }
+
   try {
     await query(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_periods_plant_dates
