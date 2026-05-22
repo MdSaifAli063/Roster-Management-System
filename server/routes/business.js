@@ -2,6 +2,7 @@ const express = require('express');
 const { query } = require('../db');
 const { authenticate, requireEmployer } = require('../middleware/auth');
 const { provisionEmployeeLogins } = require('../services/employeeCredentials');
+const { getSubscriptionContext, startProfessionalTrial, ensureBusinessForOwner } = require('../services/subscription');
 
 const router = express.Router();
 router.use(authenticate);
@@ -17,14 +18,25 @@ async function getBusinessForUser(userId) {
 router.get('/status', async (req, res) => {
   try {
     const biz = await getBusinessForUser(req.user.id);
+    const subscription = await getSubscriptionContext(req.user.id);
     res.json({
       hasBusiness: !!biz,
       is_onboarded: biz?.is_onboarded ?? true,
       business: biz,
+      subscription: {
+        effectivePlanId: subscription.effectivePlanId,
+        billingPlanId: subscription.billingPlanId,
+        subscriptionStatus: subscription.subscriptionStatus,
+        trialActive: subscription.trialActive,
+        trialDaysLeft: subscription.trialDaysLeft,
+        trialEndsAt: subscription.trialEndsAt,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+        limits: subscription.limits,
+      },
     });
   } catch (err) {
     console.error('business/status', err);
-    res.json({ hasBusiness: false, is_onboarded: true, business: null });
+    res.json({ hasBusiness: false, is_onboarded: true, business: null, subscription: null });
   }
 });
 
@@ -50,19 +62,17 @@ router.post('/onboarding', requireEmployer, async (req, res) => {
     let biz = await getBusinessForUser(req.user.id);
 
     if (!biz) {
-      const { rows } = await query(
-        `INSERT INTO businesses (owner_user_id, business_name, tax_id, country_code, state_code, location_name)
-         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-        [
-          req.user.id,
-          business_name || 'My Business',
-          tax_id || null,
-          country_code || 'AU',
-          state_code || null,
-          location_name || null,
-        ]
+      biz = await ensureBusinessForOwner(req.user.id, business_name || 'My Business');
+      if (!biz.trial_ends_at) {
+        await startProfessionalTrial(biz.id);
+        biz = await getBusinessForUser(req.user.id);
+      }
+      await query(
+        `UPDATE businesses SET tax_id = COALESCE($2, tax_id), country_code = COALESCE($3, country_code),
+         state_code = COALESCE($4, state_code), location_name = COALESCE($5, location_name) WHERE id = $1`,
+        [biz.id, tax_id || null, country_code || 'AU', state_code || null, location_name || null]
       );
-      biz = rows[0];
+      biz = await getBusinessForUser(req.user.id);
     }
 
     const updates = [];

@@ -1,6 +1,7 @@
 const express = require('express');
 const { query } = require('../db');
 const { authenticate, requireStaff } = require('../middleware/auth');
+const { checkEmployeeLimit } = require('../middleware/planLimits');
 
 const router = express.Router();
 router.use(authenticate);
@@ -99,7 +100,7 @@ router.get('/filters', async (_req, res) => {
   }
 });
 
-router.post('/', requireStaff, async (req, res) => {
+router.post('/', requireStaff, checkEmployeeLimit(), async (req, res) => {
   try {
     const b = req.body;
     const { rows } = await query(

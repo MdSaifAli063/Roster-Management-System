@@ -2,11 +2,14 @@ const express = require('express');
 const { query } = require('../db');
 const { authenticate, requireEmployer } = require('../middleware/auth');
 const { normalizeFinanceFields } = require('../utils/parseInvoiceFields');
+const { checkPlanLimit } = require('../middleware/planLimits');
 
 const router = express.Router();
 router.use(authenticate);
+router.use(requireEmployer);
+router.use(checkPlanLimit('finance'));
 
-router.get('/invoices', requireEmployer, async (req, res) => {
+router.get('/invoices', async (req, res) => {
   try {
     const { category, supplier, status, from, to } = req.query;
     const conditions = ['1=1'];
