@@ -3,10 +3,12 @@ const XLSX = require('xlsx');
 const { query } = require('../db');
 const { authenticate, requireEmployer } = require('../middleware/auth');
 const { toExcelBuffer, toPdfBuffer } = require('../utils/reportExport');
+const { checkPlanLimit } = require('../middleware/planLimits');
 
 const router = express.Router();
 router.use(authenticate);
 router.use(requireEmployer);
+router.use(checkPlanLimit('reports'));
 
 function formatTime(t) {
   if (!t) return '';
@@ -284,7 +286,7 @@ router.get('/roster-pdf', async (req, res) => {
   }
 });
 
-router.get('/comparison', async (req, res) => {
+router.get('/comparison', checkPlanLimit('comparison_reports'), async (req, res) => {
   try {
     const { start_date, end_date, prev_start, prev_end, plant_id } = req.query;
     const run = async (from, to) => {

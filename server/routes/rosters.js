@@ -5,6 +5,7 @@ const { computeTotalHours, sqlTimeOrNull, sqlShiftIdOrNull } = require('../utils
 const { sendRosterEmails } = require('../services/rosterPublish');
 const { ROLES } = require('../constants/roles');
 const { resolveEmployeeForUser } = require('../services/employeeLink');
+const { checkPlanLimit } = require('../middleware/planLimits');
 
 const router = express.Router();
 router.use(authenticate);
@@ -346,7 +347,7 @@ router.get('/period-status', async (req, res) => {
   }
 });
 
-router.post('/publish', requireEmployer, async (req, res) => {
+router.post('/publish', requireEmployer, checkPlanLimit('roster_publish'), async (req, res) => {
   try {
     const { start_date, end_date, plant_id, send_email } = req.body;
     if (!start_date || !end_date) {
