@@ -11,8 +11,6 @@ import {
   Shield,
   Sparkles,
   Eye,
-  Menu,
-  X,
   CheckCircle2,
   Send,
   FileText,
@@ -28,6 +26,7 @@ import {
   Target,
 } from 'lucide-react';
 import Button from '../components/ui/Button';
+import LandingHeader from '../components/LandingHeader';
 import { ThemeToggleButton } from '../components/ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 import { getHomePath } from '../lib/auth';
@@ -81,18 +80,6 @@ const valueProps = [
   { icon: Shield, title: 'Audit-ready rosters', text: 'Published badges, exports, and locked leave cells keep records clean.' },
   { icon: Zap, title: 'Fast to deploy', text: 'Guided onboarding gets your first roster live in days, not months.' },
 ];
-
-function NavLink({ children, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-md px-1 py-0.5 text-[var(--text-secondary)] transition-colors hover:text-[var(--accent-primary)]"
-    >
-      {children}
-    </button>
-  );
-}
 
 function SectionIntro({ eyebrow, title, description, className }) {
   return (
@@ -233,21 +220,10 @@ function HeroMockup() {
 export default function Home() {
   const { user } = useAuth();
   const appPath = user ? getHomePath(user.role) : '/login';
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'RosterPro — Workforce Roster, Leave & HR Operations';
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [menuOpen]);
-
-  const closeMenu = () => setMenuOpen(false);
-  const scrollTo = (id) => {
-    closeMenu();
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   const navIds = [
     { id: 'platform', label: 'Platform' },
@@ -256,90 +232,13 @@ export default function Home() {
     { id: 'tools', label: 'Tools' },
   ];
 
+  const scrollTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="mesh-bg flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <header className="landing-header sticky top-0 z-50 border-b border-[var(--border)] backdrop-blur-xl">
-        <div className="landing-container flex h-14 items-center justify-between gap-3 sm:h-16">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5" onClick={closeMenu}>
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-500/25 dark:shadow-blue-500/35">
-              <Calendar className="h-5 w-5 text-white" />
-            </div>
-            <div className="min-w-0">
-              <span className="block truncate font-display text-lg font-bold leading-tight sm:text-xl">RosterPro</span>
-              <span className="hidden text-[10px] font-medium text-[var(--text-secondary)] sm:block">HR roster &amp; operations</span>
-            </div>
-          </Link>
-
-          <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
-            {navIds.map(({ id, label }) => (
-              <NavLink key={id} onClick={() => scrollTo(id)}>
-                {label}
-              </NavLink>
-            ))}
-          </nav>
-
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <ThemeToggleButton />
-            <div className="hidden items-center gap-2 sm:flex">
-              {user ? (
-                <Button as={Link} to={appPath} variant="primary" className="min-h-10 px-4 btn-glow">
-                  Open workspace
-                </Button>
-              ) : (
-                <>
-                  <Button as={Link} to="/login" variant="ghost" className="min-h-10 px-3">
-                    Sign in
-                  </Button>
-                  <Button as={Link} to="/login" variant="primary" className="min-h-10 px-4 btn-glow">
-                    Start free
-                  </Button>
-                </>
-              )}
-            </div>
-            <button
-              type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-[var(--glass-hover)] md:hidden"
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            >
-              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        </div>
-
-        {menuOpen && (
-          <div className="border-t border-[var(--border)] bg-[var(--bg-secondary)] px-4 py-4 md:hidden animate-fade-up">
-            <nav className="flex flex-col gap-1">
-              {navIds.map(({ id, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => scrollTo(id)}
-                  className="rounded-lg px-3 py-3 text-left font-medium hover:bg-[var(--glass-hover)]"
-                >
-                  {label}
-                </button>
-              ))}
-              <div className="mt-3 flex flex-col gap-2 border-t border-[var(--border)] pt-4">
-                {user ? (
-                  <Button as={Link} to={appPath} onClick={closeMenu} variant="primary" className="min-h-11 w-full">
-                    Open workspace
-                  </Button>
-                ) : (
-                  <>
-                    <Button as={Link} to="/login" onClick={closeMenu} variant="outline" className="min-h-11 w-full">
-                      Sign in
-                    </Button>
-                    <Button as={Link} to="/login" onClick={closeMenu} variant="primary" className="min-h-11 w-full btn-glow">
-                      Start free
-                    </Button>
-                  </>
-                )}
-              </div>
-            </nav>
-          </div>
-        )}
-      </header>
+      <LandingHeader active="home" />
 
       <main className="relative z-10 flex-1">
         {/* Hero */}
@@ -662,6 +561,9 @@ export default function Home() {
                 {label}
               </button>
             ))}
+            <Link to="/pricing" className="hover:text-[var(--accent-primary)]">
+              Pricing
+            </Link>
             <Link to="/login" className="hover:text-[var(--accent-primary)]">
               Sign in
             </Link>

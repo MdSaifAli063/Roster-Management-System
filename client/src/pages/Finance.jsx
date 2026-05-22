@@ -5,6 +5,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import { cn } from '../lib/utils';
+import PlanGate from '../components/PlanGate';
 
 const STATUS_STYLES = {
   PAID: 'bg-emerald-500/20 text-emerald-300',
@@ -36,6 +37,7 @@ export default function Finance() {
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
+    <PlanGate feature="finance">
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold text-[var(--text-primary)]">Finance Organiser</h1>
@@ -123,5 +125,6 @@ export default function Finance() {
         </div>
       </Card>
     </div>
+    </PlanGate>
   );
 }

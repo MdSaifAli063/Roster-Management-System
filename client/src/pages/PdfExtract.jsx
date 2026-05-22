@@ -5,6 +5,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { cn } from '../lib/utils';
+import PlanGate from '../components/PlanGate';
 
 export default function PdfExtract() {
   const [file, setFile] = useState(null);
@@ -105,6 +106,7 @@ export default function PdfExtract() {
   };
 
   return (
+    <PlanGate feature="pdf_extractor">
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold text-navy dark:text-white">PDF Extractor</h1>
@@ -370,5 +372,6 @@ export default function PdfExtract() {
         </>
       )}
     </div>
+    </PlanGate>
   );
 }
