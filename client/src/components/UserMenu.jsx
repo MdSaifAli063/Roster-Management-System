@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, UserCircle, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, UserCircle, Settings, ChevronDown, CreditCard, Tag } from 'lucide-react';
 import UserAvatar from './UserAvatar';
 import { useAuth } from '../context/AuthContext';
-import { getRoleLabel } from '../lib/auth';
+import { getRoleLabel, isEmployer } from '../lib/auth';
 import { cn } from '../lib/utils';
 
 export default function UserMenu({ onLogout }) {
   const { user } = useAuth();
+  const employer = isEmployer(user?.role);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [panelPos, setPanelPos] = useState({ top: 0, right: 16 });
@@ -99,6 +100,26 @@ export default function UserMenu({ onLogout }) {
           <Settings className="h-4 w-4 text-[var(--text-secondary)]" />
           Settings
         </Link>
+        {employer && (
+          <>
+            <Link
+              to="/settings/billing"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--glass-hover)]"
+            >
+              <CreditCard className="h-4 w-4 text-[var(--text-secondary)]" />
+              Billing
+            </Link>
+            <Link
+              to="/pricing"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--glass-hover)]"
+            >
+              <Tag className="h-4 w-4 text-[var(--text-secondary)]" />
+              Pricing
+            </Link>
+          </>
+        )}
       </div>
 
       <div className="border-t border-[var(--border)] py-1">
