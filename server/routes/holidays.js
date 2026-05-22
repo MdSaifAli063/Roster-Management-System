@@ -1,6 +1,7 @@
 const express = require('express');
 const { query } = require('../db');
 const { authenticate, requireStaff } = require('../middleware/auth');
+const { checkPlanLimit } = require('../middleware/planLimits');
 
 const router = express.Router();
 router.use(authenticate);
@@ -49,7 +50,7 @@ router.post('/', requireStaff, async (req, res) => {
   }
 });
 
-router.post('/import', requireStaff, async (req, res) => {
+router.post('/import', requireStaff, checkPlanLimit('holiday_import'), async (req, res) => {
   try {
     const { holidays } = req.body;
     if (!Array.isArray(holidays) || !holidays.length) {
@@ -73,7 +74,7 @@ router.post('/import', requireStaff, async (req, res) => {
   }
 });
 
-router.get('/fetch-public', requireStaff, async (req, res) => {
+router.get('/fetch-public', requireStaff, checkPlanLimit('holiday_import'), async (req, res) => {
   try {
     const { country, year } = req.query;
     if (!country || !year) {
@@ -98,7 +99,7 @@ router.get('/fetch-public', requireStaff, async (req, res) => {
   }
 });
 
-router.post('/save-public', requireStaff, async (req, res) => {
+router.post('/save-public', requireStaff, checkPlanLimit('holiday_import'), async (req, res) => {
   try {
     const { holidays, is_paid_default } = req.body;
     const inserted = [];

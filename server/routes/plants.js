@@ -1,6 +1,7 @@
 const express = require('express');
 const { query } = require('../db');
 const { authenticate, requireStaff } = require('../middleware/auth');
+const { checkLocationLimit } = require('../middleware/planLimits');
 
 const router = express.Router();
 router.use(authenticate);
@@ -22,7 +23,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/', requireStaff, async (req, res) => {
+router.post('/', requireStaff, checkLocationLimit(), async (req, res) => {
   try {
     const { plant_code, plant_name, location, description } = req.body;
     const { rows } = await query(

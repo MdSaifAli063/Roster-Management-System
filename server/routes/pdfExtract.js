@@ -7,10 +7,12 @@ const { authenticate, requireStaff } = require('../middleware/auth');
 const { query } = require('../db');
 const { checkPythonAvailable, extractPdf } = require('../services/pdfExtract');
 const { checkFastApiHealth } = require('../services/pdfExtractHttp');
+const { checkPlanLimit } = require('../middleware/planLimits');
 
 const router = express.Router();
 router.use(authenticate);
 router.use(requireStaff);
+router.use(checkPlanLimit('pdf_extractor'));
 
 const uploadDir = path.join(os.tmpdir(), 'roster-pdf-uploads');
 if (!fs.existsSync(uploadDir)) {
