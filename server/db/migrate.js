@@ -57,7 +57,14 @@ async function migrate() {
   const v2 = fs.readFileSync(path.join(__dirname, 'migrations-v2.sql'), 'utf8');
   await pool.query(v2);
 
-  console.log('Database schema applied successfully (v2 migrations included).');
+  const subsPath = path.join(__dirname, 'migrations-subscriptions.sql');
+  if (fs.existsSync(subsPath)) {
+    await pool.query(fs.readFileSync(subsPath, 'utf8'));
+    const { seedSubscriptionPlans } = require('../services/subscription');
+    await seedSubscriptionPlans();
+  }
+
+  console.log('Database schema applied successfully (v2 + subscriptions).');
   await pool.end();
 }
 

@@ -5,6 +5,8 @@ const { query } = require('../db');
 const { authenticate } = require('../middleware/auth');
 const { SIGNUP_ROLES, ROLES } = require('../constants/roles');
 const { resolveEmployeeForUser } = require('../services/employeeLink');
+const { ensureBusinessForOwner, startProfessionalTrial } = require('../services/subscription');
+const { emailTrialStarted } = require('../services/paymentEmails');
 
 const router = express.Router();
 
@@ -75,6 +77,15 @@ router.post('/signup', async (req, res) => {
     const user = rows[0];
     if (role === ROLES.EMPLOYEE) {
       await resolveEmployeeForUser(user);
+    }
+    if (role === ROLES.EMPLOYER) {
+      const biz = await ensureBusinessForOwner(user.id, `${name.trim()}'s Business`);
+      const endsAt = await startProfessionalTrial(biz.id);
+      await emailTrialStarted({
+        to: normalizedEmail,
+        businessName: biz.business_name,
+        endsAt,
+      });
     }
     const token = signToken(user);
 
