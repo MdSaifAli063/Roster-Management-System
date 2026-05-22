@@ -10,6 +10,8 @@ import { usePageTitle } from './PageHeader';
 import { useAuth } from '../context/AuthContext';
 import { isEmployer } from '../lib/auth';
 import { cn } from '../lib/utils';
+import TrialBanner from './TrialBanner';
+import TrialExpiredModal from './TrialExpiredModal';
 
 const EMPLOYER_MOBILE_TABS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
@@ -128,6 +130,8 @@ export default function Layout() {
 
         <main className="flex-1 overflow-y-auto overflow-x-auto p-3 pb-20 sm:p-5 md:p-6 lg:pb-6">
           <div className="relative z-0 mx-auto min-w-0 w-full max-w-[1600px]">
+            <TrialBanner />
+            <TrialExpiredModal />
             <Outlet />
           </div>
         </main>

@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { PlanProvider } from './context/PlanContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import EmployerRoute from './components/EmployerRoute';
 import EmployeeRoute from './components/EmployeeRoute';
@@ -29,6 +30,8 @@ import Onboarding from './pages/Onboarding';
 import Staff from './pages/Staff';
 import StaffDetail from './pages/StaffDetail';
 import Finance from './pages/Finance';
+import Pricing from './pages/Pricing';
+import BillingSettings from './pages/BillingSettings';
 
 function Employer({ children }) {
   return (
@@ -42,11 +45,13 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <PlanProvider>
         <NotificationProvider>
           <ToastProvider>
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/pricing" element={<Pricing />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
                 <Route
@@ -75,12 +80,14 @@ export default function App() {
                   <Route path="finance" element={<Employer><Finance /></Employer>} />
                   <Route path="profile" element={<Profile />} />
                   <Route path="settings" element={<Settings />} />
+                  <Route path="settings/billing" element={<Employer><BillingSettings /></Employer>} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </BrowserRouter>
           </ToastProvider>
         </NotificationProvider>
+        </PlanProvider>
       </AuthProvider>
     </ThemeProvider>
   );
