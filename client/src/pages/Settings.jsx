@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import PageHeader from '../components/PageHeader';
@@ -42,6 +42,17 @@ export default function Settings() {
             : 'Theme and notification preferences'
         }
       />
+
+      {isEmployer(user?.role) && (
+        <Card title="Subscription">
+          <p className="mb-4 text-sm text-[var(--text-secondary)]">
+            For HR and managers only. View your plan, payment history, and manage billing through Stripe.
+          </p>
+          <Button as={Link} to="/settings/billing" variant="primary">
+            Billing &amp; subscription
+          </Button>
+        </Card>
+      )}
 
       <Card title="Appearance">
         <p className="mb-4 text-sm text-[var(--text-secondary)]">

@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import { downloadRosterExcel, downloadRosterPdf, downloadReportExport } from '../api/export';
 import { TrendingDown, TrendingUp } from 'lucide-react';
+import PlanGate from '../components/PlanGate';
 
 const GROUPS = [
   { value: 'week', label: 'Week' },
@@ -80,6 +81,7 @@ export default function Reports() {
   };
 
   return (
+    <PlanGate feature="reports">
     <div className="space-y-6">
       <h1 className="font-display text-xl font-bold text-[var(--text-primary)] sm:text-2xl">Reports</h1>
 
@@ -210,5 +212,6 @@ export default function Reports() {
         )}
       </Card>
     </div>
+    </PlanGate>
   );
 }
