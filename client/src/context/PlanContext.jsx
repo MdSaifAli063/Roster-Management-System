@@ -59,12 +59,15 @@ export function PlanProvider({ children }) {
     refresh();
   }, [refresh]);
 
-  const effectivePlanId = status?.effectivePlanId || 'starter';
+  const effectivePlanId = status?.isDemoAccount ? 'business' : (status?.effectivePlanId || 'starter');
 
   const value = useMemo(() => {
-    const featureSet = PLAN_FEATURES[effectivePlanId] || PLAN_FEATURES.starter;
+    const featureSet = status?.isDemoAccount
+      ? PLAN_FEATURES.business
+      : (PLAN_FEATURES[effectivePlanId] || PLAN_FEATURES.starter);
 
     function allowed(feature) {
+      if (status?.isDemoAccount) return true;
       const keys = FEATURE_MAP[feature] || [feature];
       return keys.some((k) => featureSet.has(k));
     }
@@ -75,13 +78,16 @@ export function PlanProvider({ children }) {
       loading,
       refresh,
       effectivePlanId,
-      trialActive: status?.trialActive,
+      isDemoAccount: !!status?.isDemoAccount,
+      trialActive: status?.isDemoAccount ? false : status?.trialActive,
       trialDaysLeft: status?.trialDaysLeft ?? 0,
-      limits: status?.limits || { maxEmployees: 5, maxLocations: 1 },
+      limits: status?.isDemoAccount
+        ? { maxEmployees: null, maxLocations: null }
+        : (status?.limits || { maxEmployees: 5, maxLocations: 1 }),
       allowed,
       stripeEnabled: !!status?.stripeCustomerId || plans.length > 0,
     };
-  }, [status, plans, loading, refresh, effectivePlanId]);
+  }, [status, plans, loading, refresh, effectivePlanId, status?.isDemoAccount]);
 
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
 }

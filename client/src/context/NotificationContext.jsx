@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { useAuth } from './AuthContext';
 import api from '../api/client';
 
-const POLL_MS = Number(import.meta.env.VITE_NOTIFICATION_POLL_MS) || 20000;
+const POLL_MS = Number(import.meta.env.VITE_NOTIFICATION_POLL_MS) || 30000;
 
 const NotificationContext = createContext(null);
 

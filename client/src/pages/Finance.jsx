@@ -1,11 +1,13 @@
 import { Fragment, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Trash2 } from 'lucide-react';
 import api from '../api/client';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import { cn } from '../lib/utils';
 import PlanGate from '../components/PlanGate';
+import { useToast } from '../context/ToastContext';
 
 const STATUS_STYLES = {
   PAID: 'bg-emerald-500/20 text-emerald-300',
@@ -15,10 +17,12 @@ const STATUS_STYLES = {
 
 export default function Finance() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [invoices, setInvoices] = useState([]);
   const [summary, setSummary] = useState(null);
   const [filters, setFilters] = useState({ category: '', status: '', supplier: '' });
   const [expanded, setExpanded] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const load = async () => {
     try {
@@ -35,6 +39,23 @@ export default function Finance() {
   };
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const removeInvoice = async (inv) => {
+    const label = inv.supplier || inv.invoice_number || `#${inv.id}`;
+    if (!window.confirm(`Delete invoice "${label}"? This cannot be undone.`)) return;
+
+    setDeletingId(inv.id);
+    try {
+      await api.delete(`/finance/invoices/${inv.id}`);
+      if (expanded === inv.id) setExpanded(null);
+      toast?.success?.('Invoice deleted');
+      await load();
+    } catch (err) {
+      toast?.error?.(err.response?.data?.error || 'Could not delete invoice');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <PlanGate feature="finance">
@@ -90,6 +111,7 @@ export default function Finance() {
                 <th>Due</th>
                 <th>Total</th>
                 <th>Status</th>
+                <th className="w-12 text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -110,10 +132,21 @@ export default function Finance() {
                         {inv.display_status}
                       </span>
                     </td>
+                    <td className="py-2 text-right">
+                      <button
+                        type="button"
+                        title="Delete invoice"
+                        disabled={deletingId === inv.id}
+                        onClick={() => removeInvoice(inv)}
+                        className="rounded p-1.5 text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
                   </tr>
                   {expanded === inv.id && (
                     <tr key={`${inv.id}-lines`}>
-                      <td colSpan={6} className="bg-[var(--bg-elevated)] px-4 py-2 text-xs">
+                      <td colSpan={7} className="bg-[var(--bg-elevated)] px-4 py-2 text-xs">
                         <pre className="whitespace-pre-wrap">{(inv.line_items || []).map((l) => JSON.stringify(l)).join('\n') || 'No line items'}</pre>
                       </td>
                     </tr>
