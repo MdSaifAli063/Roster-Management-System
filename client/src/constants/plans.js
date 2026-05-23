@@ -27,6 +27,6 @@ export const FAQ_ITEMS = [
   },
   {
     q: 'Can I switch between monthly and annual?',
-    a: 'Yes, via the Stripe Customer Portal after subscribing. Annual billing saves about 17%.',
+    a: 'Yes, via Stripe Customer Portal or Razorpay dashboard after subscribing. Annual billing saves about 17%.',
   },
 ];

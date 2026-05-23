@@ -67,6 +67,35 @@ async function createRazorpaySubscription({ business, user, planId, interval }) 
   return { url, subscriptionId: subscription.id };
 }
 
+async function createGuestRazorpaySubscription({ planId, interval }) {
+  const rzp = getRazorpay();
+  if (!rzp) {
+    throw Object.assign(new Error('Razorpay is not configured'), { status: 503 });
+  }
+  if (planId === PLAN_IDS.STARTER) {
+    throw Object.assign(new Error('Starter plan is free'), { status: 400 });
+  }
+
+  const razorpayPlanId = resolveRazorpayPlanId(planId, interval);
+  if (!razorpayPlanId) {
+    throw Object.assign(new Error(`Razorpay plan not configured for ${planId}`), { status: 503 });
+  }
+
+  const subscription = await rzp.subscriptions.create({
+    plan_id: razorpayPlanId,
+    total_count: interval === 'annual' ? 12 : 60,
+    quantity: 1,
+    customer_notify: 1,
+    notes: {
+      plan_id: planId,
+      interval,
+      guest: 'true',
+    },
+  });
+
+  return { url: subscription.short_url, subscriptionId: subscription.id };
+}
+
 async function cancelRazorpaySubscription(subscriptionId) {
   const rzp = getRazorpay();
   if (!rzp) throw Object.assign(new Error('Razorpay not configured'), { status: 503 });
@@ -85,6 +114,7 @@ module.exports = {
   razorpayConfigured,
   getRazorpay,
   createRazorpaySubscription,
+  createGuestRazorpaySubscription,
   cancelRazorpaySubscription,
   verifyWebhookSignature,
   resolveRazorpayPlanId,

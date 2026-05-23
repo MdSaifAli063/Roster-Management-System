@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
@@ -30,6 +30,19 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login, signup } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect');
+
+  useEffect(() => {
+    if (searchParams.get('mode') === 'signup') setMode('signup');
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get('checkout') === 'success') {
+      setMode('signup');
+      setError('');
+    }
+  }, [searchParams]);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -37,7 +50,7 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      navigate(getHomePath(user.role));
+      navigate(redirectTo || getHomePath(user.role));
     } catch (err) {
       setError(authErrorMessage(err));
     } finally {
@@ -55,7 +68,7 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await signup({ name, email, password, role });
-      navigate(getHomePath(user.role));
+      navigate(redirectTo || getHomePath(user.role));
     } catch (err) {
       setError(authErrorMessage(err) || 'Registration failed');
     } finally {
@@ -90,6 +103,12 @@ export default function Login() {
             </div>
             <h2 className="font-display text-2xl font-bold text-[var(--text-primary)]">RosterPro</h2>
           </div>
+
+          {searchParams.get('checkout') === 'success' && (
+            <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
+              Payment received — create your employer account with the same email to activate your plan.
+            </div>
+          )}
 
           {isApiMisconfigured() && (
             <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">

@@ -11,9 +11,16 @@ const {
   seedSubscriptionPlans,
   getPlansFromDb,
 } = require('../services/subscription');
-const { createCheckoutSession, createPortalSession, cancelStripeSubscription, getStripe } = require('../services/stripePayments');
+const {
+  createCheckoutSession,
+  createGuestCheckoutSession,
+  createPortalSession,
+  cancelStripeSubscription,
+  getStripe,
+} = require('../services/stripePayments');
 const {
   createRazorpaySubscription,
+  createGuestRazorpaySubscription,
   cancelRazorpaySubscription,
   verifyWebhookSignature,
 } = require('../services/razorpayPayments');
@@ -92,56 +99,91 @@ router.get('/subscription-status', authenticate, requireEmployer, async (req, re
   }
 });
 
+async function runCheckout({ planId, interval, requestedProvider, user, business }) {
+  const provider = pickDefaultProvider(requestedProvider);
+  if (!provider) {
+    throw Object.assign(new Error('No payment gateway configured (Stripe or Razorpay)'), { status: 503 });
+  }
+
+  if (planId === PLAN_IDS.STARTER) {
+    throw Object.assign(new Error('Starter plan is free — use Get started free'), { status: 400 });
+  }
+
+  if (provider === 'razorpay') {
+    const createFn = business ? createRazorpaySubscription : createGuestRazorpaySubscription;
+    const args = business
+      ? { business, user, planId, interval }
+      : { planId, interval };
+    const result = await createFn(args);
+    if (business) {
+      await query('UPDATE businesses SET razorpay_subscription_id = $1 WHERE id = $2', [
+        result.subscriptionId,
+        business.id,
+      ]);
+    }
+    return { url: result.url, provider: 'razorpay', subscriptionId: result.subscriptionId };
+  }
+
+  const createFn = business ? createCheckoutSession : createGuestCheckoutSession;
+  const args = business ? { business, user, planId, interval } : { planId, interval };
+  const result = await createFn(args);
+
+  if (business && result.customerId) {
+    await query('UPDATE businesses SET stripe_customer_id = $1 WHERE id = $2', [
+      result.customerId,
+      business.id,
+    ]);
+  }
+
+  return { url: result.url, sessionId: result.sessionId, provider: 'stripe' };
+}
+
+/** Public — Subscribe without logging in first */
+router.post('/guest-checkout', async (req, res) => {
+  try {
+    const { plan_id: planId, interval = 'monthly', provider: requestedProvider } = req.body;
+    if (!planId) return res.status(400).json({ error: 'plan_id required' });
+    if (planId === PLAN_IDS.STARTER) {
+      return res.status(400).json({ error: 'Use Get started free to create a free account' });
+    }
+
+    const result = await runCheckout({
+      planId,
+      interval,
+      requestedProvider,
+      user: null,
+      business: null,
+    });
+    res.json(result);
+  } catch (err) {
+    console.error('guest-checkout', err);
+    res.status(err.status || 500).json({ error: err.message || 'Checkout failed' });
+  }
+});
+
 router.post('/create-checkout-session', authenticate, requireEmployer, async (req, res) => {
   try {
     const { plan_id: planId, interval = 'monthly', provider: requestedProvider } = req.body;
     if (!planId) return res.status(400).json({ error: 'plan_id required' });
 
-    const provider = pickDefaultProvider(requestedProvider);
-    if (!provider) {
-      return res.status(503).json({ error: 'No payment gateway configured (Stripe or Razorpay)' });
-    }
-
     let business = await ensureBusinessForOwner(req.user.id);
-    const { query: q } = require('../db');
 
     if (planId === PLAN_IDS.STARTER) {
-      await q(
+      await query(
         `UPDATE businesses SET plan_id = $1, subscription_status = 'active', updated_at = NOW() WHERE id = $2`,
         [PLAN_IDS.STARTER, business.id]
       );
       return res.json({ url: null, message: 'Starter plan activated' });
     }
 
-    if (provider === 'razorpay') {
-      const result = await createRazorpaySubscription({
-        business,
-        user: req.user,
-        planId,
-        interval,
-      });
-      await q('UPDATE businesses SET razorpay_subscription_id = $1 WHERE id = $2', [
-        result.subscriptionId,
-        business.id,
-      ]);
-      return res.json({ url: result.url, provider: 'razorpay', subscriptionId: result.subscriptionId });
-    }
-
-    const result = await createCheckoutSession({
-      business,
-      user: req.user,
+    const result = await runCheckout({
       planId,
       interval,
+      requestedProvider,
+      user: req.user,
+      business,
     });
-
-    if (result.customerId) {
-      await q('UPDATE businesses SET stripe_customer_id = $1 WHERE id = $2', [
-        result.customerId,
-        business.id,
-      ]);
-    }
-
-    res.json({ url: result.url, sessionId: result.sessionId, provider: 'stripe' });
+    res.json(result);
   } catch (err) {
     console.error('create-checkout-session', err);
     res.status(err.status || 500).json({ error: err.message || 'Checkout failed' });
@@ -205,25 +247,17 @@ router.post('/upgrade-plan', authenticate, requireEmployer, async (req, res) => 
       return res.status(400).json({ error: 'Use checkout for paid plans' });
     }
 
-    const provider = pickDefaultProvider(requestedProvider);
-    if (!provider) {
-      return res.status(503).json({ error: 'No payment gateway configured' });
-    }
-
     let business = await getBusinessForUser(req.user.id);
     if (!business) business = await ensureBusinessForOwner(req.user.id);
 
-    if (provider === 'razorpay') {
-      const result = await createRazorpaySubscription({ business, user: req.user, planId, interval });
-      await query('UPDATE businesses SET razorpay_subscription_id = $1 WHERE id = $2', [
-        result.subscriptionId,
-        business.id,
-      ]);
-      return res.json({ url: result.url, provider: 'razorpay' });
-    }
-
-    const result = await createCheckoutSession({ business, user: req.user, planId, interval });
-    res.json({ url: result.url, provider: 'stripe' });
+    const result = await runCheckout({
+      planId,
+      interval,
+      requestedProvider,
+      user: req.user,
+      business,
+    });
+    res.json(result);
   } catch (err) {
     console.error('upgrade-plan', err);
     res.status(err.status || 500).json({ error: err.message || 'Upgrade failed' });
@@ -305,8 +339,24 @@ async function handleStripeWebhookEvent(event) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object;
-      const businessId = Number(session.metadata?.business_id);
       const planId = session.metadata?.plan_id || PLAN_IDS.PROFESSIONAL;
+      let businessId = Number(session.metadata?.business_id) || null;
+
+      if (!businessId && session.metadata?.guest === 'true') {
+        const email = session.customer_details?.email?.trim().toLowerCase();
+        if (email) {
+          const { rows: users } = await query('SELECT id FROM users WHERE email = $1', [email]);
+          if (users[0]) {
+            const biz = await getBusinessForUser(users[0].id);
+            businessId = biz?.id || null;
+            if (!businessId) {
+              const created = await ensureBusinessForOwner(users[0].id);
+              businessId = created.id;
+            }
+          }
+        }
+      }
+
       if (!businessId) break;
       await activateSubscription({
         businessId,

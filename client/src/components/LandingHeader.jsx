@@ -93,7 +93,7 @@ export default function LandingHeader({ active = 'home' }) {
                   Sign in
                 </Button>
                 <Button as={Link} to="/login" variant="primary" className="min-h-10 px-4 btn-glow">
-                  Start free
+                  Start
                 </Button>
               </>
             )}
@@ -138,7 +138,7 @@ export default function LandingHeader({ active = 'home' }) {
                     Sign in
                   </Button>
                   <Button as={Link} to="/login" onClick={closeMenu} variant="primary" className="min-h-11 w-full btn-glow">
-                    Start free
+                    Start
                   </Button>
                 </>
               )}

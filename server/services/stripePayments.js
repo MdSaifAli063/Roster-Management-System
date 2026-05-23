@@ -100,6 +100,47 @@ async function createCheckoutSession({ business, user, planId, interval }) {
   return { sessionId: session.id, url: session.url, customerId: customer.id };
 }
 
+/** Public pricing checkout — no account required; Stripe collects email */
+async function createGuestCheckoutSession({ planId, interval }) {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw Object.assign(new Error('Stripe is not configured. Set STRIPE_SECRET_KEY and price IDs.'), { status: 503 });
+  }
+
+  if (planId === PLAN_IDS.STARTER) {
+    throw Object.assign(new Error('Starter plan is free — sign up instead'), { status: 400 });
+  }
+
+  const priceId = await resolveStripePriceId(planId, interval);
+  if (!priceId) {
+    throw Object.assign(
+      new Error(`Stripe price not configured for ${planId} (${interval}).`),
+      { status: 503 }
+    );
+  }
+
+  const base = clientBaseUrl();
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${base}/login?checkout=success&plan=${planId}`,
+    cancel_url: `${base}/pricing?cancelled=1`,
+    metadata: {
+      plan_id: planId,
+      interval,
+      guest: 'true',
+    },
+    subscription_data: {
+      metadata: {
+        plan_id: planId,
+        guest: 'true',
+      },
+    },
+  });
+
+  return { sessionId: session.id, url: session.url };
+}
+
 async function createPortalSession(business) {
   const stripe = getStripe();
   if (!stripe) {
@@ -130,6 +171,7 @@ async function cancelStripeSubscription(business) {
 module.exports = {
   getStripe,
   createCheckoutSession,
+  createGuestCheckoutSession,
   createPortalSession,
   cancelStripeSubscription,
   resolveStripePriceId,
