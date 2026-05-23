@@ -116,7 +116,7 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: light dark;
   scroll-behavior: smooth;
 }
 
@@ -347,15 +347,47 @@ html.dark .sidebar-nav-active:hover {
   background: #2563eb;
 }
 
-.dashboard-shell {
+.dashboard-shell,
+.app-page-shell {
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 40%, transparent 100%);
   border-radius: 1rem;
   padding: 0.25rem;
   margin: -0.25rem;
+  min-width: 0;
 }
 
-html.dark .dashboard-shell {
+html.dark .dashboard-shell,
+html.dark .app-page-shell {
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.5) 0%, transparent 60%);
+}
+
+/* App workspace — light dashboard canvas inside layout */
+.app-workspace {
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #ffffff;
+  --bg-elevated: #f8fafc;
+}
+
+html.dark .app-workspace {
+  --bg-primary: #0a0f1e;
+  --bg-secondary: #111827;
+  --bg-elevated: #1a2235;
+}
+
+.app-table-wrap {
+  border-radius: 0.75rem;
+}
+
+.app-table thead tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.app-table tbody tr {
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+.app-table tbody tr:last-child {
+  border-bottom: none;
 }
 
 .chart-bar-striped {
@@ -395,6 +427,147 @@ html.dark .dashboard-shell {
 .landing-header {
   background: var(--landing-header-bg);
   box-shadow: var(--landing-header-shadow);
+}
+
+.landing-announcement {
+  background: #0c4a8a;
+  color: #ffffff;
+  text-align: center;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.landing-announcement-link {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.75rem;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  color: inherit;
+  transition: background 0.2s;
+}
+
+.landing-announcement-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.landing-hero-airtable {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(37, 99, 235, 0.12), transparent 55%),
+    linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.dark .landing-hero-airtable {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(59, 130, 246, 0.15), transparent 55%),
+    linear-gradient(180deg, #0a0f1e 0%, #111827 100%);
+}
+
+.landing-logo-cloud {
+  background: #f1f5f9;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.dark .landing-logo-cloud {
+  background: #0d1428;
+}
+
+.landing-logo-item {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: -0.02em;
+  color: #94a3b8;
+  filter: grayscale(1);
+  opacity: 0.85;
+}
+
+.landing-split-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.landing-mockup-card {
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #ffffff;
+  box-shadow:
+    0 25px 50px -12px rgba(15, 23, 42, 0.15),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.dark .landing-mockup-card {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  box-shadow: 0 28px 56px -14px rgba(0, 0, 0, 0.55);
+}
+
+.landing-collage {
+  position: relative;
+  min-height: 22rem;
+}
+
+@media (min-width: 1024px) {
+  .landing-collage {
+    min-height: 26rem;
+  }
+}
+
+.landing-collage-main {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 22rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 1024px) {
+  .landing-collage-main {
+    max-width: none;
+    margin-right: 0;
+    margin-left: 2rem;
+  }
+}
+
+.landing-collage-float {
+  position: absolute;
+  z-index: 20;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 16px 40px -8px rgba(37, 99, 235, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+.dark .landing-collage-float {
+  background: rgba(17, 24, 39, 0.95);
+  border-color: var(--border);
+}
+
+.landing-link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #2563eb;
+  transition: gap 0.2s;
+}
+
+.landing-link-arrow:hover {
+  gap: 0.55rem;
+}
+
+.dark .landing-link-arrow {
+  color: #60a5fa;
 }
 
 html.auth-page-lock,

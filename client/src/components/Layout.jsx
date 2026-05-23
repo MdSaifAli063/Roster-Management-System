@@ -128,7 +128,7 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto overflow-x-auto p-3 pb-20 sm:p-5 md:p-6 lg:pb-6">
+        <main className="app-workspace flex-1 overflow-y-auto overflow-x-hidden p-3 pb-20 sm:p-5 md:p-6 lg:pb-6">
           <div className="relative z-0 mx-auto min-w-0 w-full max-w-[1600px]">
             <TrialBanner />
             <TrialExpiredModal />
