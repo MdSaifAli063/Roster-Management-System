@@ -2,38 +2,55 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext(null);
 
+function systemPrefersDark() {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function resolveTheme(mode) {
+  if (mode === 'system') return systemPrefersDark() ? 'dark' : 'light';
+  return mode === 'dark' ? 'dark' : 'light';
+}
+
 function getInitialTheme() {
   const stored = localStorage.getItem('theme');
-  if (stored === 'dark' || stored === 'light') return stored;
+  if (stored === 'dark' || stored === 'light' || stored === 'system') return stored;
   return 'dark';
 }
 
-function applyTheme(theme) {
+function applyResolved(mode) {
+  const resolved = resolveTheme(mode);
   const root = document.documentElement;
   root.classList.remove('light', 'dark');
-  root.classList.add(theme);
-  localStorage.setItem('theme', theme);
+  root.classList.add(resolved);
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(getInitialTheme);
+  const [theme, setThemeState] = useState(getInitialTheme);
 
   useEffect(() => {
-    applyTheme(theme);
+    localStorage.setItem('theme', theme);
+    applyResolved(theme);
+    if (theme !== 'system') return undefined;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => applyResolved('system');
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
   }, [theme]);
 
-  const setThemeMode = (mode) => {
-    if (mode === 'dark' || mode === 'light') setTheme(mode);
+  const setTheme = (mode) => {
+    if (mode === 'dark' || mode === 'light' || mode === 'system') setThemeState(mode);
   };
 
-  const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  const resolved = resolveTheme(theme);
+  const toggle = () => setThemeState((t) => (resolveTheme(t) === 'dark' ? 'light' : 'dark'));
 
   return (
     <ThemeContext.Provider
       value={{
         theme,
-        dark: theme === 'dark',
-        setTheme: setThemeMode,
+        resolved,
+        dark: resolved === 'dark',
+        setTheme,
         toggle,
       }}
     >

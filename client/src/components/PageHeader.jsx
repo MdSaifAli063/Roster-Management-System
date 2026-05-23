@@ -8,7 +8,7 @@ const ROUTE_META = {
   '/dashboard': { title: 'Dashboard', crumbs: ['Home', 'Dashboard'], employeeTitle: 'My Dashboard', employeeCrumbs: ['Home', 'My Dashboard'] },
   '/manage-roster': { title: 'Create Roster', crumbs: ['Roster', 'Create'] },
   '/view-roster': { title: 'View Roster', crumbs: ['Roster', 'View'], employeeTitle: 'My Roster', employeeCrumbs: ['My work', 'My Roster'] },
-  '/actual-roster': { title: 'Actual Roster', crumbs: ['Roster', 'Actual'] },
+  '/actual-roster': { title: 'Attendance', crumbs: ['Workforce', 'Attendance'] },
   '/employees': { title: 'Employees', crumbs: ['Masters', 'Employees'] },
   '/shifts': { title: 'Shifts', crumbs: ['Masters', 'Shifts'] },
   '/plants': { title: 'Plant Master', crumbs: ['Masters', 'Plants'] },
@@ -21,6 +21,7 @@ const ROUTE_META = {
   '/organization': { title: 'Organization', crumbs: ['Organization'] },
   '/settings': { title: 'Settings', crumbs: ['Settings'] },
   '/settings/billing': { title: 'Billing', crumbs: ['Settings', 'Billing'] },
+  '/help': { title: 'Help Center', crumbs: ['Help Center'] },
   '/profile': { title: 'Profile', crumbs: ['Profile'] },
 };
 

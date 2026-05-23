@@ -34,6 +34,7 @@ import Finance from './pages/Finance';
 import Pricing from './pages/Pricing';
 import BillingSettings from './pages/BillingSettings';
 import Organization from './pages/Organization';
+import HelpCenter from './pages/HelpCenter';
 
 function Employer({ children }) {
   return (
@@ -85,6 +86,7 @@ export default function App() {
                   <Route path="profile" element={<Profile />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="settings/billing" element={<Employer><BillingSettings /></Employer>} />
+                  <Route path="help" element={<HelpCenter />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

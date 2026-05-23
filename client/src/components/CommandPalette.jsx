@@ -25,6 +25,7 @@ const ALL_ITEMS = [
   { label: 'Billing', to: '/settings/billing', employer: true },
   { label: 'Pricing', to: '/pricing', employer: true },
   { label: 'Settings', to: '/settings' },
+  { label: 'Help Center', to: '/help' },
   { label: 'Profile', to: '/profile' },
 ];
 

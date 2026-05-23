@@ -2,7 +2,7 @@ import { NavLink, Link } from 'react-router-dom';
 import {
   LayoutDashboard, Calendar, CalendarDays, CalendarCheck, Palmtree, FileBarChart, FileText,
   Settings, Eye, Plane, UserCircle, X, Pencil, Wallet, UserCog, CreditCard, Tag,
-  Building2, ChevronDown, PanelLeft,
+  Building2, ChevronDown, PanelLeft, HelpCircle,
 } from 'lucide-react';
 import Logo from './Logo';
 import SidebarQuickSearch from './SidebarQuickSearch';
@@ -31,8 +31,9 @@ const employerSections = [
       { to: '/actual-roster', icon: CalendarDays, label: 'Actual Roster' },
       { to: '/pdf-extractor', icon: FileText, label: 'PDF Extractor' },
       { to: '/finance', icon: Wallet, label: 'Finance' },
-      { to: '/profile', icon: UserCircle, label: 'Profile' },
       { to: '/settings', icon: Settings, label: 'Settings' },
+      { to: '/help', icon: HelpCircle, label: 'Help Center' },
+      { to: '/profile', icon: UserCircle, label: 'Profile' },
       { to: '/settings/billing', icon: CreditCard, label: 'Billing' },
       { to: '/pricing', icon: Tag, label: 'Pricing' },
     ],
@@ -52,8 +53,9 @@ const employeeSections = [
   {
     label: 'Others',
     items: [
-      { to: '/profile', icon: UserCircle, label: 'Profile' },
       { to: '/settings', icon: Settings, label: 'Settings' },
+      { to: '/help', icon: HelpCircle, label: 'Help Center' },
+      { to: '/profile', icon: UserCircle, label: 'Profile' },
     ],
   },
 ];

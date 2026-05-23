@@ -19,6 +19,66 @@ function dateTodayStr() {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
+function parseISODate(str) {
+  if (!str || !/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
+  const d = new Date(`${str}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function weekRangeFrom(anchor = new Date()) {
+  const day = anchor.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(anchor);
+  monday.setDate(anchor.getDate() + diffToMonday);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const toDateStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return { from: toDateStr(monday), to: toDateStr(sunday) };
+}
+
+function resolveRange(query) {
+  const fromQ = parseISODate(query.from);
+  const toQ = parseISODate(query.to);
+  if (fromQ && toQ && fromQ <= toQ) {
+    return {
+      from: query.from,
+      to: query.to,
+      dayCount: Math.round((toQ - fromQ) / 86400000) + 1,
+    };
+  }
+  const w = weekRangeFrom();
+  return { ...w, dayCount: 7 };
+}
+
+function formatTime12(t) {
+  if (!t) return '—';
+  const s = String(t).slice(0, 5);
+  const [h, m] = s.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function minutesBetween(inT, outT) {
+  if (!inT || !outT) return 0;
+  const [ih, im] = String(inT).slice(0, 5).split(':').map(Number);
+  const [oh, om] = String(outT).slice(0, 5).split(':').map(Number);
+  let mins = oh * 60 + om - (ih * 60 + im);
+  if (mins < 0) mins += 24 * 60;
+  return mins;
+}
+
+function formatDuration(mins) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h}:${String(m).padStart(2, '0')}:00`;
+}
+
+function trendPct(current, previous) {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 1000) / 10;
+}
+
 const router = express.Router();
 router.use(authenticate);
 
@@ -81,7 +141,6 @@ async function buildMismatchRows(startDate, endDate, plantId) {
     }
   });
 
-  // Attendance without roster
   const { rows: orphanAttendance } = await query(
     `SELECT a.*, e.emp_code, e.emp_name
      FROM attendance_records a
@@ -113,6 +172,220 @@ async function buildMismatchRows(startDate, endDate, plantId) {
 
   return { mismatches, rosterMap };
 }
+
+router.get('/employer', requireStaff, async (req, res) => {
+  try {
+    const { from, to, dayCount } = resolveRange(req.query);
+    const todayStr = dateTodayStr();
+    const department = req.query.department?.trim() || '';
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(5, Number(req.query.limit) || 10));
+    const offset = (page - 1) * limit;
+    const sort = req.query.sort === 'name' ? 'name' : 'date';
+
+    const todayRosterParams = [todayStr];
+    let todayDeptSql = '';
+    if (department && department !== 'all') {
+      todayDeptSql = ` AND COALESCE(e.business_unit, 'General') = $2`;
+      todayRosterParams.push(department);
+    }
+
+    const todayRosterRes = await query(
+      `SELECT r.emp_id, r.shift_start, r.mandatory_start,
+              a.punch_in, a.status AS att_status
+       FROM rosters r
+       JOIN employees e ON e.id = r.emp_id
+       LEFT JOIN attendance_records a ON a.emp_id = r.emp_id AND a.attendance_date = r.roster_date
+       WHERE r.roster_date = $1 AND r.status = 'W'${todayDeptSql}`,
+      todayRosterParams
+    );
+
+    let onTime = 0;
+    let late = 0;
+    let notAttend = 0;
+    todayRosterRes.rows.forEach((r) => {
+      if (!r.punch_in) {
+        notAttend += 1;
+        return;
+      }
+      if (String(r.att_status).toUpperCase() === 'LATE') late += 1;
+      else onTime += 1;
+    });
+    const rosterToday = todayRosterRes.rows.length;
+    const attendedToday = onTime + late;
+    const attendanceRate = rosterToday > 0 ? Math.round((attendedToday / rosterToday) * 1000) / 10 : 0;
+    const onTimePct = rosterToday > 0 ? Math.round((onTime / rosterToday) * 1000) / 10 : 0;
+    const latePct = rosterToday > 0 ? Math.round((late / rosterToday) * 1000) / 10 : 0;
+    const notAttendPct = rosterToday > 0 ? Math.round((notAttend / rosterToday) * 1000) / 10 : 0;
+
+    const { rows: empTotalRows } = await query(
+      `SELECT COUNT(*)::int AS c FROM employees WHERE COALESCE(status, 'ACTIVE') <> 'INACTIVE'`
+    );
+    const totalEmployees = empTotalRows[0]?.c || 0;
+
+    const rangeStart = parseISODate(from);
+    const weeklyChart = [];
+    for (let i = 0; i < Math.min(dayCount, 7); i++) {
+      const d = new Date(rangeStart);
+      d.setDate(rangeStart.getDate() + i);
+      const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const { rows: dayRows } = await query(
+        `SELECT r.emp_id, a.punch_in, a.status AS att_status
+         FROM rosters r
+         LEFT JOIN attendance_records a ON a.emp_id = r.emp_id AND a.attendance_date = r.roster_date
+         WHERE r.roster_date = $1 AND r.status = 'W'`,
+        [key]
+      );
+      let dOn = 0;
+      let dLate = 0;
+      let dAbs = 0;
+      dayRows.forEach((r) => {
+        if (!r.punch_in) dAbs += 1;
+        else if (String(r.att_status).toUpperCase() === 'LATE') dLate += 1;
+        else dOn += 1;
+      });
+      weeklyChart.push({ day: labels[d.getDay()], date: key, onTime: dOn, late: dLate, absent: dAbs });
+    }
+
+    const prevFrom = new Date(rangeStart);
+    prevFrom.setDate(prevFrom.getDate() - dayCount);
+    const prevTo = new Date(rangeStart);
+    prevTo.setDate(prevTo.getDate() - 1);
+    const prevFromStr = `${prevFrom.getFullYear()}-${pad(prevFrom.getMonth() + 1)}-${pad(prevFrom.getDate())}`;
+    const prevToStr = `${prevTo.getFullYear()}-${pad(prevTo.getMonth() + 1)}-${pad(prevTo.getDate())}`;
+
+    const { rows: rangeAtt } = await query(
+      `SELECT a.punch_in, a.punch_out FROM attendance_records a
+       JOIN employees e ON e.id = a.emp_id
+       WHERE a.attendance_date >= $1 AND a.attendance_date <= $2 AND a.punch_in IS NOT NULL`,
+      [from, to]
+    );
+  let totalLogMins = 0;
+    rangeAtt.forEach((a) => {
+      totalLogMins += minutesBetween(a.punch_in, a.punch_out);
+    });
+
+    const { rows: prevAtt } = await query(
+      `SELECT COUNT(DISTINCT a.emp_id)::int AS c FROM attendance_records a
+       WHERE a.attendance_date >= $1 AND a.attendance_date <= $2 AND a.punch_in IS NOT NULL`,
+      [prevFromStr, prevToStr]
+    );
+    const { rows: currAtt } = await query(
+      `SELECT COUNT(DISTINCT a.emp_id)::int AS c FROM attendance_records a
+       WHERE a.attendance_date >= $1 AND a.attendance_date <= $2 AND a.punch_in IS NOT NULL`,
+      [from, to]
+    );
+    const attendTrend = trendPct(currAtt[0]?.c || 0, prevAtt[0]?.c || 0);
+
+    const expectedMins = rosterToday * 8 * 60;
+    const { rows: deptRows } = await query(
+      `SELECT COALESCE(e.business_unit, 'General') AS name,
+              COUNT(DISTINCT e.id)::int AS employees,
+              COUNT(DISTINCT CASE WHEN a.punch_in IS NOT NULL THEN e.id END)::int AS attended
+       FROM employees e
+       LEFT JOIN rosters r ON r.emp_id = e.id AND r.roster_date = $1 AND r.status = 'W'
+       LEFT JOIN attendance_records a ON a.emp_id = e.id AND a.attendance_date = $1
+       WHERE COALESCE(e.status, 'ACTIVE') <> 'INACTIVE'
+       GROUP BY COALESCE(e.business_unit, 'General')
+       HAVING COUNT(DISTINCT CASE WHEN r.id IS NOT NULL THEN e.id END) > 0
+       ORDER BY name
+       LIMIT 8`,
+      [todayStr]
+    );
+
+    const departments = deptRows.map((d) => {
+      const working = d.employees || 1;
+      const perf = Math.round((d.attended / working) * 1000) / 10;
+      return {
+        name: d.name,
+        performancePct: perf,
+        employeePerfPct: perf,
+        attended: d.attended,
+        working,
+      };
+    });
+
+    const listParams = [from, to];
+    let listWhere = `a.attendance_date >= $1 AND a.attendance_date <= $2`;
+    if (department && department !== 'all') {
+      listParams.push(department);
+      listWhere += ` AND COALESCE(e.business_unit, 'General') = $3`;
+    }
+
+    const { rows: countRows } = await query(
+      `SELECT COUNT(*)::int AS c FROM attendance_records a
+       JOIN employees e ON e.id = a.emp_id
+       WHERE ${listWhere}`,
+      listParams
+    );
+    const totalRows = countRows[0]?.c || 0;
+
+    const orderBy =
+      sort === 'name'
+        ? 'e.emp_name ASC, a.attendance_date DESC'
+        : 'a.attendance_date DESC, a.punch_in DESC NULLS LAST';
+
+    listParams.push(limit, offset);
+    const { rows: listRows } = await query(
+      `SELECT a.id, a.attendance_date, a.punch_in, a.punch_out, a.status,
+              e.id AS emp_id, e.emp_code, e.emp_name,
+              COALESCE(e.business_unit, 'General') AS department
+       FROM attendance_records a
+       JOIN employees e ON e.id = a.emp_id
+       WHERE ${listWhere}
+       ORDER BY ${orderBy}
+       LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+      listParams
+    );
+
+    const rows = listRows.map((r) => {
+      const mins = minutesBetween(r.punch_in, r.punch_out);
+      const present = !!r.punch_in;
+      return {
+        id: r.id,
+        empId: r.emp_id,
+        empCode: r.emp_code,
+        empName: r.emp_name,
+        department: r.department,
+        date: String(r.attendance_date).slice(0, 10),
+        checkIn: formatTime12(r.punch_in),
+        checkOut: formatTime12(r.punch_out),
+        logHours: present ? formatDuration(mins) : '—',
+        status: present ? 'Present' : 'Absent',
+      };
+    });
+
+    res.json({
+      range: { from, to, today: todayStr },
+      stats: {
+        attendanceRate,
+        onTimePct,
+        latePct,
+        notAttendPct,
+        attendedToday,
+        onRosterToday: rosterToday,
+        totalEmployees,
+        totalLogMinutes: totalLogMins,
+        totalLogFormatted: formatDuration(totalLogMins),
+        expectedLogFormatted: formatDuration(expectedMins),
+        attendTrend: { value: Math.abs(attendTrend), positive: attendTrend >= 0 },
+      },
+      weeklyChart,
+      departments,
+      rows,
+      pagination: {
+        page,
+        limit,
+        total: totalRows,
+        totalPages: Math.max(1, Math.ceil(totalRows / limit)),
+      },
+    });
+  } catch (err) {
+    console.error('attendance/employer', err);
+    res.status(500).json({ error: 'Failed to load attendance overview' });
+  }
+});
 
 router.get('/mismatches', async (req, res) => {
   try {
