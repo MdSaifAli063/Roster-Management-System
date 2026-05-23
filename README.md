@@ -571,12 +571,15 @@ npm run dev
 
 Open **http://localhost:5000** — one process serves Vite middleware + `/api`.
 
-### 🔑 Demo accounts
+### Local dev seed (optional)
 
-| Email | Password | Role |
-|-------|----------|------|
-| `admin@roster.com` | `admin123` | ADMIN |
-| `hr@roster.com` | `admin123` | HR_USER |
+`npm run db:seed` loads sample HR data for **local development only**. Production refuses to run seed unless `ALLOW_DB_SEED=true`.
+
+### Google Sign-In
+
+1. Create an OAuth **Web client** in [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Add authorized JavaScript origins: `http://localhost:5173`, `http://localhost:5000`, and your production URL.
+3. Set the same Client ID in `server/.env` as `GOOGLE_CLIENT_ID` and in `client/.env` as `VITE_GOOGLE_CLIENT_ID`.
 
 ---
 
