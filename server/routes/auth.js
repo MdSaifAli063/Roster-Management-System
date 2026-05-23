@@ -3,12 +3,20 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { query } = require('../db');
 const { authenticate } = require('../middleware/auth');
+const { authLimiter } = require('../middleware/rateLimit');
 const { SIGNUP_ROLES, ROLES } = require('../constants/roles');
 const { resolveEmployeeForUser } = require('../services/employeeLink');
 const { ensureBusinessForOwner, startProfessionalTrial } = require('../services/subscription');
 const { emailTrialStarted } = require('../services/paymentEmails');
+const { verifyGoogleCredential, isGoogleAuthConfigured } = require('../services/googleAuth');
 
 const router = express.Router();
+router.use(authLimiter);
+
+const SIGNUP_ROLE_LABELS = {
+  [ROLES.EMPLOYEE]: 'Employee',
+  [ROLES.EMPLOYER]: 'Employer / HR',
+};
 
 function signToken(user) {
   const secret = process.env.JWT_SECRET;
@@ -39,6 +47,82 @@ function validatePassword(password) {
   }
   return null;
 }
+
+async function onboardEmployer(user, businessLabel) {
+  const biz = await ensureBusinessForOwner(user.id, businessLabel);
+  const endsAt = await startProfessionalTrial(biz.id);
+  await emailTrialStarted({
+    to: user.email,
+    businessName: biz.business_name,
+    endsAt,
+  });
+}
+
+router.get('/config', (_req, res) => {
+  const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim() || null;
+  res.json({
+    googleAuth: isGoogleAuthConfigured(),
+    googleClientId,
+  });
+});
+
+router.post('/google', async (req, res) => {
+  try {
+    const { credential, role, mode = 'signin' } = req.body;
+    const googleUser = await verifyGoogleCredential(credential);
+
+    const { rows: byGoogle } = await query('SELECT * FROM users WHERE google_id = $1', [googleUser.googleId]);
+    let user = byGoogle[0];
+
+    if (!user) {
+      const { rows: byEmail } = await query('SELECT * FROM users WHERE email = $1', [googleUser.email]);
+      user = byEmail[0];
+      if (user && !user.google_id) {
+        await query(
+          `UPDATE users SET google_id = $1,
+             avatar_url = COALESCE(avatar_url, $2),
+             name = CASE WHEN TRIM(COALESCE(name, '')) = '' THEN $3 ELSE name END
+           WHERE id = $4`,
+          [googleUser.googleId, googleUser.picture, googleUser.name, user.id]
+        );
+        user.google_id = googleUser.googleId;
+      }
+    }
+
+    if (!user) {
+      if (mode !== 'signup') {
+        return res.status(404).json({
+          error: 'No account found for this Google email. Switch to Sign up or create an account with email.',
+        });
+      }
+      if (!role || !SIGNUP_ROLES.includes(role)) {
+        return res.status(400).json({ error: 'Choose Employer or Employee before signing up with Google' });
+      }
+
+      const { rows } = await query(
+        `INSERT INTO users (name, email, password_hash, role, google_id, avatar_url)
+         VALUES ($1, $2, NULL, $3, $4, $5)
+         RETURNING id, name, email, role, avatar_url, created_at`,
+        [googleUser.name, googleUser.email, role, googleUser.googleId, googleUser.picture]
+      );
+      user = rows[0];
+      if (role === ROLES.EMPLOYEE) {
+        await resolveEmployeeForUser(user);
+      }
+      if (role === ROLES.EMPLOYER) {
+        await onboardEmployer(user, `${googleUser.name}'s Business`);
+      }
+    }
+
+    const token = signToken(user);
+    res.json({ token, user: publicUser(user) });
+  } catch (err) {
+    console.error('Google auth error:', err);
+    res.status(err.status || 500).json({
+      error: err.message || 'Google sign-in failed',
+    });
+  }
+});
 
 router.post('/signup', async (req, res) => {
   try {
@@ -79,13 +163,7 @@ router.post('/signup', async (req, res) => {
       await resolveEmployeeForUser(user);
     }
     if (role === ROLES.EMPLOYER) {
-      const biz = await ensureBusinessForOwner(user.id, `${name.trim()}'s Business`);
-      const endsAt = await startProfessionalTrial(biz.id);
-      await emailTrialStarted({
-        to: normalizedEmail,
-        businessName: biz.business_name,
-        endsAt,
-      });
+      await onboardEmployer(user, `${name.trim()}'s Business`);
     }
     const token = signToken(user);
 
@@ -105,8 +183,12 @@ router.post('/login', async (req, res) => {
 
     const { rows } = await query('SELECT * FROM users WHERE email = $1', [email.trim().toLowerCase()]);
     const user = rows[0];
-    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    if (!user?.password_hash || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(401).json({
+        error: user && !user.password_hash
+          ? 'This account uses Google sign-in. Continue with Google below.'
+          : 'Invalid email or password',
+      });
     }
 
     const token = signToken(user);
@@ -206,7 +288,7 @@ router.get('/roles', (_req, res) => {
   res.json(
     SIGNUP_ROLES.map((value) => ({
       value,
-      label: value === ROLES.EMPLOYEE ? 'Employee' : value === ROLES.HR_USER ? 'HR User' : 'Training Manager',
+      label: SIGNUP_ROLE_LABELS[value] || value,
     }))
   );
 });

@@ -27,11 +27,15 @@ function getPoolConfig() {
     (process.env.DATABASE_SSL === 'true' ||
       /neon\.tech|supabase\.co|render\.com/i.test(conn));
 
+  const poolMax = Number(process.env.DATABASE_POOL_MAX);
+  const defaultMax = process.env.VERCEL ? 1 : 20;
+
   return {
     connectionString: conn,
     ssl: useSsl ? { rejectUnauthorized: false } : false,
-    max: process.env.VERCEL ? 1 : 10,
+    max: Number.isFinite(poolMax) && poolMax > 0 ? poolMax : defaultMax,
     idleTimeoutMillis: process.env.VERCEL ? 10000 : 30000,
+    connectionTimeoutMillis: 10000,
   };
 }
 

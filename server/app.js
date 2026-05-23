@@ -1,7 +1,10 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const { loadEnv } = require('./loadEnv');
+const { apiLimiter } = require('./middleware/rateLimit');
+const { isGoogleAuthConfigured } = require('./services/googleAuth');
 
 loadEnv();
 
@@ -66,17 +69,34 @@ function schemaReady() {
 function createApp() {
   const app = express();
 
+  if (process.env.NODE_ENV === 'production' || process.env.TRUST_PROXY === 'true') {
+    app.set('trust proxy', 1);
+  }
+
   app.use(async (_req, _res, next) => {
     await schemaReady();
     next();
   });
 
   app.use(cors(buildCorsOptions()));
+  app.use(compression());
   app.use('/api/payments', createWebhookRouter());
-  app.use(express.json());
+  app.use(express.json({ limit: '2mb' }));
   app.use(cookieParser());
+  app.use('/api', apiLimiter);
 
-  app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+  app.get('/api/health', async (_req, res) => {
+    try {
+      const { testConnection } = require('./db');
+      await testConnection();
+      res.json({
+        status: 'ok',
+        googleAuth: isGoogleAuthConfigured(),
+      });
+    } catch {
+      res.status(503).json({ status: 'degraded', database: 'unavailable' });
+    }
+  });
 
   app.use('/api/auth', authRoutes);
   app.use('/api/employees', employeeRoutes);

@@ -39,7 +39,10 @@ const {
   emailPlanUpgraded,
 } = require('../services/paymentEmails');
 
+const { paymentLimiter } = require('../middleware/rateLimit');
+
 const router = express.Router();
+router.use(paymentLimiter);
 
 router.get('/plans', async (_req, res) => {
   try {

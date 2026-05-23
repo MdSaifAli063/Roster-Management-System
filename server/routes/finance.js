@@ -151,4 +151,28 @@ router.patch('/invoices/:id', requireEmployer, async (req, res) => {
   }
 });
 
+router.delete('/invoices/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: 'Invalid invoice id' });
+    }
+
+    await query(
+      'UPDATE pdf_extract_jobs SET finance_invoice_id = NULL WHERE finance_invoice_id = $1',
+      [id]
+    );
+
+    const { rowCount } = await query('DELETE FROM finance_invoices WHERE id = $1', [id]);
+    if (!rowCount) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    res.json({ ok: true, id });
+  } catch (err) {
+    console.error('finance/delete invoice', err);
+    res.status(500).json({ error: 'Failed to delete invoice' });
+  }
+});
+
 module.exports = router;

@@ -13,7 +13,10 @@ const router = express.Router();
 router.post('/pdf', express.json({ limit: '25mb' }), async (req, res) => {
   let filePath = null;
   try {
-    const secret = process.env.INBOUND_EMAIL_SECRET;
+    const secret = process.env.INBOUND_EMAIL_SECRET?.trim();
+    if (process.env.NODE_ENV === 'production' && !secret) {
+      return res.status(503).json({ error: 'Inbound email is not configured' });
+    }
     if (secret && req.headers['x-inbound-secret'] !== secret) {
       return res.status(401).json({ error: 'Invalid inbound secret' });
     }

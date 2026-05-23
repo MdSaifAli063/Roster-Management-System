@@ -62,6 +62,16 @@ async function ensureV2Schema() {
     /* roster_periods may not exist yet on very old DBs */
   }
 
+  const oauthPath = path.join(__dirname, 'migrations-auth-oauth.sql');
+  if (fs.existsSync(oauthPath)) {
+    const oauthSql = stripLineComments(fs.readFileSync(oauthPath, 'utf8'));
+    try {
+      await query(oauthSql);
+    } catch (err) {
+      console.warn('oauth migration:', err.message?.slice(0, 200));
+    }
+  }
+
   applied = true;
 }
 

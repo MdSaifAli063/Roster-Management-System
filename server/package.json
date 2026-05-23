@@ -9,12 +9,16 @@
     "dev": "nodemon index.js",
     "dev:https": "cross-env USE_HTTPS=true nodemon index.js",
     "db:migrate": "node db/migrate.js",
-    "db:seed": "node db/seed.js"
+    "db:seed": "node db/seed.js",
+    "db:seed-demo": "node scripts/seed-demo-pro.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "compression": "^1.8.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "express-rate-limit": "^7.5.0",
+    "google-auth-library": "^9.15.1",
     "cross-env": "^10.1.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",

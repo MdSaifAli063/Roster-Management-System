@@ -5,6 +5,7 @@ const {
   planHasFeature,
   PLAN_CATALOG,
 } = require('../constants/plans');
+const { isDemoEmail } = require('../constants/demoAccount');
 
 const TRIAL_DAYS = 14;
 
@@ -63,7 +64,29 @@ function getLimitsForPlan(planId) {
 }
 
 async function getSubscriptionContext(userId) {
+  const { rows: userRows } = await query('SELECT email FROM users WHERE id = $1', [userId]);
+  const userEmail = userRows[0]?.email;
   const business = await getBusinessForUser(userId);
+
+  if (isDemoEmail(userEmail)) {
+    return {
+      business,
+      effectivePlanId: PLAN_IDS.BUSINESS,
+      billingPlanId: PLAN_IDS.BUSINESS,
+      subscriptionStatus: 'active',
+      trialActive: false,
+      trialEndsAt: null,
+      trialDaysLeft: 0,
+      currentPeriodEnd: null,
+      limits: PLAN_LIMITS[PLAN_IDS.BUSINESS],
+      isDemoAccount: true,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+      paypalSubscriptionId: null,
+      razorpaySubscriptionId: null,
+    };
+  }
+
   const effectivePlanId = resolveEffectivePlanId(business);
   const limits = getLimitsForPlan(effectivePlanId);
   const trialActive = business ? isTrialActive(business) : false;
@@ -84,6 +107,7 @@ async function getSubscriptionContext(userId) {
     trialDaysLeft,
     currentPeriodEnd: business?.current_period_end || null,
     limits,
+    isDemoAccount: false,
     stripeCustomerId: business?.stripe_customer_id || null,
     stripeSubscriptionId: business?.stripe_subscription_id || null,
     paypalSubscriptionId: business?.paypal_subscription_id || null,
@@ -92,6 +116,7 @@ async function getSubscriptionContext(userId) {
 }
 
 function canUseFeature(ctx, feature) {
+  if (ctx.isDemoAccount) return true;
   return planHasFeature(ctx.effectivePlanId, feature);
 }
 
@@ -134,6 +159,9 @@ async function startProfessionalTrial(businessId) {
 async function expireTrialIfNeeded(business) {
   if (!business || !business.trial_ends_at) return business;
   if (new Date(business.trial_ends_at) > new Date()) return business;
+
+  const { rows: owners } = await query('SELECT email FROM users WHERE id = $1', [business.owner_user_id]);
+  if (isDemoEmail(owners[0]?.email)) return business;
 
   if (
     business.subscription_status === 'trialing' &&

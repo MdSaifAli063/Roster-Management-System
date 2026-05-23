@@ -1,3 +1,10 @@
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DB_SEED !== 'true') {
+  console.error(
+    'Refusing to seed a production database. Set ALLOW_DB_SEED=true only for intentional local/staging resets.'
+  );
+  process.exit(1);
+}
+
 const bcrypt = require('bcryptjs');
 const { pool, query } = require('./index');
 
