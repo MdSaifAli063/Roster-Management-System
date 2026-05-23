@@ -4,7 +4,7 @@ import { Menu, Search, LayoutDashboard, Calendar, Plane, CalendarCheck, UserCirc
 import NotificationBell from './NotificationBell';
 import UserMenu from './UserMenu';
 import Sidebar from './Sidebar';
-import CommandPalette from './CommandPalette';
+import GlobalSearchModal from './search/GlobalSearchModal';
 import { ThemeToggleButton } from './ThemeToggle';
 import { usePageTitle } from './PageHeader';
 import { useAuth } from '../context/AuthContext';
@@ -108,7 +108,7 @@ export default function Layout() {
               className="flex w-full max-w-sm items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] px-3 py-2 text-sm text-[var(--text-secondary)] transition-all hover:border-blue-500/40 focus-ring"
             >
               <Search className="h-4 w-4 shrink-0" />
-              <span className="flex-1 text-left">Search…</span>
+              <span className="flex-1 text-left">Search anything here…</span>
               <kbd className="rounded border border-[var(--border)] px-1.5 py-0.5 text-[10px]">⌘K</kbd>
             </button>
           </div>
@@ -155,7 +155,7 @@ export default function Layout() {
         </nav>
       </div>
 
-      <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
+      <GlobalSearchModal open={cmdOpen} onClose={() => setCmdOpen(false)} />
     </div>
   );
 }

@@ -27,6 +27,7 @@ const businessRoutes = require('./routes/business');
 const settingsRoutes = require('./routes/settings');
 const financeRoutes = require('./routes/finance');
 const staffRoutes = require('./routes/staff');
+const searchRoutes = require('./routes/search');
 const inboundEmailRoutes = require('./routes/inboundEmail');
 const paymentsRoutes = require('./routes/payments');
 const { createWebhookRouter } = require('./routes/payments');
@@ -116,6 +117,7 @@ function createApp() {
   app.use('/api/settings', settingsRoutes);
   app.use('/api/finance', financeRoutes);
   app.use('/api/staff', staffRoutes);
+  app.use('/api/search', searchRoutes);
   app.use('/api/inbound', inboundEmailRoutes);
   app.use('/api/payments', paymentsRoutes);
 
