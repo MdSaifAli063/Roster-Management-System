@@ -83,7 +83,7 @@ export default function Layout() {
         mobileOpen={mobileNav}
         onMobileClose={() => setMobileNav(false)}
         onToggleCollapse={() => setCollapsed((c) => !c)}
-        onLogout={handleLogout}
+        onOpenSearch={() => setCmdOpen(true)}
       />
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between gap-3 overflow-visible border-b border-[var(--border)] bg-[var(--bg-secondary)]/95 px-3 backdrop-blur-xl sm:px-5">

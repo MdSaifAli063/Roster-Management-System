@@ -10,7 +10,7 @@ export const LOGO_ALT = 'RosterPro — Smart Scheduling Solutions';
 
 /** Full horizontal logo — width scales from height (≈3.7:1). */
 const FULL_SIZE = {
-  sm: 'h-12',
+  sm: 'h-9 sm:h-10',
   md: 'h-14 sm:h-16',
   lg: 'h-16 sm:h-[4.25rem]',
   xl: 'h-20 sm:h-24',
@@ -18,7 +18,7 @@ const FULL_SIZE = {
 };
 
 const MARK_SIZE = {
-  sm: 'h-10 w-10',
+  sm: 'h-8 w-8',
   md: 'h-11 w-11',
   lg: 'h-12 w-12',
 };

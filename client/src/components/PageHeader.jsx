@@ -18,6 +18,7 @@ const ROUTE_META = {
   '/leave': { title: 'Leave', crumbs: ['Leave'], employeeTitle: 'Apply Leave', employeeCrumbs: ['My work', 'Apply Leave'] },
   '/attendance': { title: 'Attendance', crumbs: ['Attendance'], employeeTitle: 'My Attendance', employeeCrumbs: ['My work', 'Attendance'] },
   '/assignments': { title: 'Reassignment', crumbs: ['Masters', 'Reassignment'] },
+  '/organization': { title: 'Organization', crumbs: ['Organization'] },
   '/settings': { title: 'Settings', crumbs: ['Settings'] },
   '/settings/billing': { title: 'Billing', crumbs: ['Settings', 'Billing'] },
   '/profile': { title: 'Profile', crumbs: ['Profile'] },
