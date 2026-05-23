@@ -52,7 +52,7 @@ npm run db:seed
 | **App URL** | https://roster-app-134407752215.asia-south1.run.app |
 | **Health** | https://roster-app-134407752215.asia-south1.run.app/api/health |
 | **Cloud SQL** | `roster-db` (asia-south1) |
-| **Login** | `admin@roster.com` / `admin123` |
+| **Auth** | Sign up at `/login` or Google Sign-In (set `GOOGLE_CLIENT_ID` + build with `VITE_GOOGLE_CLIENT_ID`) |
 
 Redeploy after code changes:
 
@@ -104,7 +104,7 @@ gcloud run deploy roster-app --image gcr.io/roster-system-496716/roster-app --re
 
 - Open `https://YOUR-URL.run.app/api/health` → `{"status":"ok"}`
 - Open `https://YOUR-URL.run.app/login`
-- Sign in: `admin@roster.com` / `admin123` (after seed)
+- Create an employer account at `/login?mode=signup` (do **not** run `db:seed` on production)
 
 ---
 

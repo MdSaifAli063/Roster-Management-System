@@ -11,7 +11,8 @@
     "vercel-build": "npm install --prefix server && npm run build --prefix client",
     "start": "npm run build && npm run start --prefix server",
     "db:migrate": "npm run db:migrate --prefix server",
-    "db:seed": "npm run db:seed --prefix server"
+    "db:seed": "npm run db:seed --prefix server",
+    "db:seed-demo": "npm run db:seed-demo --prefix server"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
