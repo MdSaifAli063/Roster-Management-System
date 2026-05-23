@@ -1,15 +1,18 @@
+import PageHeader from '../PageHeader';
+import { useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 
+/** @deprecated Use PageHeader via PageShell — kept for settings tab layout imports */
 export function SettingsPageHeader({ title, subtitle, actions }) {
+  const location = useLocation();
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div>
-        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Preferences</p>
-        <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
-      </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-    </div>
+    <PageHeader
+      pathname={location.pathname}
+      title={title}
+      eyebrow="Preferences"
+      subtitle={subtitle}
+      actions={actions}
+    />
   );
 }
 
