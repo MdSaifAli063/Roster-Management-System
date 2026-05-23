@@ -7,11 +7,14 @@ import { isEmployer } from '../lib/auth';
 
 const ALL_ITEMS = [
   { label: 'Dashboard', to: '/dashboard' },
+  { label: 'Organization', to: '/organization', employer: true },
+  { label: 'Attendance', to: '/actual-roster', employer: true },
+  { label: 'Schedule', to: '/view-roster', employer: true },
   { label: 'Create Roster', to: '/manage-roster', employer: true },
   { label: 'View Roster', to: '/view-roster', employer: true },
   { label: 'My Roster', to: '/view-roster', employee: true },
   { label: 'Apply Leave', to: '/leave', employee: true },
-  { label: 'Leave Approvals', to: '/leave', employer: true },
+  { label: 'Leave', to: '/leave', employer: true },
   { label: 'Attendance', to: '/attendance', employee: true },
   { label: 'Actual Roster', to: '/actual-roster', employer: true },
   { label: 'Staff', to: '/staff', employer: true },
@@ -19,6 +22,8 @@ const ALL_ITEMS = [
   { label: 'Reports', to: '/reports', employer: true },
   { label: 'PDF Extractor', to: '/pdf-extractor', employer: true },
   { label: 'Finance', to: '/finance', employer: true },
+  { label: 'Billing', to: '/settings/billing', employer: true },
+  { label: 'Pricing', to: '/pricing', employer: true },
   { label: 'Settings', to: '/settings' },
   { label: 'Profile', to: '/profile' },
 ];

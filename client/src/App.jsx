@@ -33,6 +33,7 @@ import StaffDetail from './pages/StaffDetail';
 import Finance from './pages/Finance';
 import Pricing from './pages/Pricing';
 import BillingSettings from './pages/BillingSettings';
+import Organization from './pages/Organization';
 
 function Employer({ children }) {
   return (
@@ -80,6 +81,7 @@ export default function App() {
                   <Route path="pdf-extractor" element={<Employer><PdfExtract /></Employer>} />
                   <Route path="pdf-extract" element={<Navigate to="/pdf-extractor" replace />} />
                   <Route path="finance" element={<Employer><Finance /></Employer>} />
+                  <Route path="organization" element={<Employer><Organization /></Employer>} />
                   <Route path="profile" element={<Profile />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="settings/billing" element={<Employer><BillingSettings /></Employer>} />
