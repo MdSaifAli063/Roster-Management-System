@@ -80,7 +80,7 @@ export default function Dashboard() {
       : { a: 0, b: 0, c: 0, d: 0 };
 
     return (
-      <div className="-mx-3 -mt-2 space-y-6 sm:-mx-5 md:-mx-6">
+      <div className="app-page-shell space-y-6 pb-2">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-medium text-blue-600 dark:text-blue-400">My workspace</p>
@@ -157,7 +157,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="dashboard-shell -mx-3 -mt-2 space-y-6 sm:-mx-5 md:-mx-6">
+    <div className="app-page-shell space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Overview</p>

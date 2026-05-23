@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import api from '../api/client';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import PageHeader from '../components/PageHeader';
+import PageShell from '../components/layout/PageShell';
 import GradeBadge from '../components/GradeBadge';
 import { TableSkeleton } from '../components/ui/Skeleton';
 import { Input, Select } from '../components/ui/Input';
@@ -11,7 +10,6 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export default function Employees() {
-  const location = useLocation();
   const [employees, setEmployees] = useState([]);
   const [plants, setPlants] = useState([]);
   const [form, setForm] = useState(null);
@@ -43,16 +41,14 @@ export default function Employees() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        pathname={location.pathname}
-        subtitle={`${filtered.length} employees`}
-        actions={
-          <Button variant="primary" onClick={() => setForm({ emp_code: '', emp_name: '', email: '', grade: '', role: '', function: '', plant_id: '' })}>
-            <Plus className="h-4 w-4" /> Add Employee
-          </Button>
-        }
-      />
+    <PageShell
+      subtitle={`${filtered.length} employees in directory`}
+      actions={
+        <Button variant="primary" onClick={() => setForm({ emp_code: '', emp_name: '', email: '', grade: '', role: '', function: '', plant_id: '' })}>
+          <Plus className="h-4 w-4" /> Add Employee
+        </Button>
+      }
+    >
 
       <Card>
         <Input label="Search" placeholder="Code or name…" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-4 max-w-xs" />
@@ -124,6 +120,6 @@ export default function Employees() {
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

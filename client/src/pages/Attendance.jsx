@@ -4,7 +4,7 @@ import { LogIn, LogOut, Clock } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import PageHeader from '../components/PageHeader';
+import PageShell from '../components/layout/PageShell';
 import MonthCalendar from '../components/MonthCalendar';
 import { formatTime } from '../lib/utils';
 import api from '../api/client';
@@ -82,27 +82,25 @@ export default function Attendance() {
   const selectedInfo = calendarDays[selectedKey];
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        pathname={location.pathname}
-        subtitle={
-          data?.employee
-            ? `${data.employee.emp_name} · ${data.employee.emp_code} — punch in/out for working days`
-            : format(today, 'EEEE, d MMMM yyyy')
-        }
-        actions={
-          canMark ? (
-            <>
-              <Button variant="teal" onClick={markIn} disabled={marking || !!att?.punch_in}>
-                <LogIn className="h-4 w-4" /> Mark In
-              </Button>
-              <Button variant="secondary" onClick={markOut} disabled={marking || !att?.punch_in}>
-                <LogOut className="h-4 w-4" /> Mark Out
-              </Button>
-            </>
-          ) : null
-        }
-      />
+    <PageShell
+      subtitle={
+        data?.employee
+          ? `${data.employee.emp_name} · ${data.employee.emp_code} — punch in/out for working days`
+          : format(today, 'EEEE, d MMMM yyyy')
+      }
+      actions={
+        canMark ? (
+          <>
+            <Button variant="teal" onClick={markIn} disabled={marking || !!att?.punch_in}>
+              <LogIn className="h-4 w-4" /> Mark In
+            </Button>
+            <Button variant="secondary" onClick={markOut} disabled={marking || !att?.punch_in}>
+              <LogOut className="h-4 w-4" /> Mark Out
+            </Button>
+          </>
+        ) : null
+      }
+    >
 
       {loading ? (
         <div className="flex min-h-[120px] items-center justify-center">
@@ -204,7 +202,7 @@ export default function Attendance() {
           </Card>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 

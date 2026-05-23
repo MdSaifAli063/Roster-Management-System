@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import PageHeader from '../components/PageHeader';
+import PageShell from '../components/layout/PageShell';
 import api from '../api/client';
 import { usePlan } from '../context/PlanContext';
 import { useToast } from '../context/ToastContext';
@@ -78,11 +78,7 @@ export default function BillingSettings() {
     : '—';
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader
-        pathname="/settings/billing"
-        subtitle="Manage your plan, payment method, and invoices"
-      />
+    <PageShell maxWidth="md" subtitle="Manage your plan, payment method, and invoices.">
 
       <Card title="Current plan">
         {loading ? (
@@ -174,6 +170,6 @@ export default function BillingSettings() {
           </div>
         )}
       </Card>
-    </div>
+    </PageShell>
   );
 }
