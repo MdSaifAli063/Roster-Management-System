@@ -1,11 +1,12 @@
 const { OAuth2Client } = require('google-auth-library');
+const { resolveGoogleClientId } = require('../utils/googleClientId');
 
 function isGoogleAuthConfigured() {
-  return Boolean(process.env.GOOGLE_CLIENT_ID?.trim());
+  return Boolean(resolveGoogleClientId());
 }
 
 function getClient() {
-  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+  const clientId = resolveGoogleClientId();
   if (!clientId) return null;
   return new OAuth2Client(clientId);
 }
@@ -21,7 +22,7 @@ async function verifyGoogleCredential(credential) {
 
   const ticket = await client.verifyIdToken({
     idToken: credential.trim(),
-    audience: process.env.GOOGLE_CLIENT_ID.trim(),
+    audience: resolveGoogleClientId(),
   });
   const payload = ticket.getPayload();
   if (!payload?.email) {

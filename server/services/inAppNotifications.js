@@ -88,10 +88,20 @@ async function notifyLeaveSubmittedRealtime({ leave, employee }) {
   await pushNotification({
     staffOnly: true,
     type: 'LEAVE_SUBMITTED',
-    title: 'New leave request',
-    message: `${employee.emp_name} requested ${leave.leave_type} (${leave.start_date} – ${leave.end_date})`,
+    title: 'Leave request',
+    message: `${employee.emp_name} has requested time off. Review it now.`,
     link: '/leave',
-    payload: { leaveId: leave.id, empId: employee.id },
+    payload: {
+      category: 'reminder',
+      leaveId: leave.id,
+      empId: employee.id,
+      empName: employee.emp_name,
+      empCode: employee.emp_code,
+      leaveType: leave.leave_type,
+      startDate: String(leave.start_date).slice(0, 10),
+      endDate: String(leave.end_date).slice(0, 10),
+      status: leave.status,
+    },
   });
 }
 
@@ -104,7 +114,16 @@ async function notifyLeaveDecisionRealtime({ leave, employee, approved, reviewer
     title: `Leave ${status}`,
     message: `Your ${leave.leave_type} leave (${leave.start_date} – ${leave.end_date}) was ${status}${reviewerName ? ` by ${reviewerName}` : ''}.`,
     link: '/leave',
-    payload: { leaveId: leave.id },
+    payload: {
+      category: 'mention',
+      leaveId: leave.id,
+      empName: employee.emp_name,
+      leaveType: leave.leave_type,
+      startDate: String(leave.start_date).slice(0, 10),
+      endDate: String(leave.end_date).slice(0, 10),
+      approved,
+      reviewerName,
+    },
   });
 }
 
@@ -122,9 +141,17 @@ async function notifyReassignmentRealtime({ fromEmp, toEmp, date, reason, assign
     title: 'Work reassignment',
     message: `${fromEmp.emp_name} → ${toEmp.emp_name} on ${date}. Reason: ${reason}`,
     link: '/assignments',
-    payload: { fromEmpId: fromEmp.id, toEmpId: toEmp.id, date },
+    payload: {
+      category: 'mention',
+      fromEmpId: fromEmp.id,
+      toEmpId: toEmp.id,
+      fromName: fromEmp.emp_name,
+      toName: toEmp.emp_name,
+      date: String(date).slice(0, 10),
+      reason,
+      assignedBy,
+    },
   });
-
 }
 
 async function notifyAttendanceMarkRealtime({ employee, action, time }) {
@@ -134,7 +161,14 @@ async function notifyAttendanceMarkRealtime({ employee, action, time }) {
     title: `Employee ${action}`,
     message: `${employee.emp_name} (${employee.emp_code}) marked ${action} at ${time}`,
     link: '/actual-roster',
-    payload: { empId: employee.id, action },
+    payload: {
+      category: 'reminder',
+      empId: employee.id,
+      empName: employee.emp_name,
+      empCode: employee.emp_code,
+      action,
+      time,
+    },
   });
 
   const empUserId = await getUserIdByEmployeeId(employee.id);
@@ -145,7 +179,7 @@ async function notifyAttendanceMarkRealtime({ employee, action, time }) {
       title: `${action === 'in' ? 'Marked in' : 'Marked out'}`,
       message: `You successfully marked ${action} at ${time}.`,
       link: '/attendance',
-      payload: { action },
+      payload: { category: 'mention', action, time },
     });
   }
 }
@@ -158,7 +192,12 @@ async function notifyAttendanceMismatchRealtime({ mismatches, date }) {
     title: 'Attendance mismatches',
     message: `${mismatches.length} mismatch(es) detected for ${date}`,
     link: '/actual-roster',
-    payload: { count: mismatches.length, date },
+    payload: {
+      category: 'reminder',
+      count: mismatches.length,
+      date: String(date).slice(0, 10),
+      summary: `${mismatches.length} attendance mismatch(es) on ${String(date).slice(0, 10)}`,
+    },
   });
 }
 
