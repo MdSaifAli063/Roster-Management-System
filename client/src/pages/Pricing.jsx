@@ -42,9 +42,11 @@ export default function Pricing() {
   }, [searchParams, toast]);
 
   useEffect(() => {
+    let cancelled = false;
     api
       .get('/payments/plans')
       .then((r) => {
+        if (cancelled) return;
         const fromApi = (r.data.plans || []).map(normalizePlan);
         setPlans(fromApi.length ? fromApi : CATALOG_PLANS.map(normalizePlan));
         const g = {
@@ -55,11 +57,18 @@ export default function Pricing() {
         setProvider(r.data.defaultProvider || pickDefaultProvider(g));
       })
       .catch(() => {
+        if (cancelled) return;
         setPlans(CATALOG_PLANS.map(normalizePlan));
         toast?.error?.('Could not load plans — showing default pricing.');
       })
-      .finally(() => setLoading(false));
-  }, [toast]);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once on mount
+  }, []);
 
   const paymentOptions = orderedProviders(gateways);
 

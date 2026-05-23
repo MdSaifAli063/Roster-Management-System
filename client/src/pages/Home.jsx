@@ -219,7 +219,7 @@ function HeroMockup() {
 
 export default function Home() {
   const { user } = useAuth();
-  const appPath = user ? getHomePath(user.role) : '/login';
+  const appPath = user ? getHomePath(user.role) : '/login?mode=signup';
 
   useEffect(() => {
     document.title = 'RosterPro — Workforce Roster, Leave & HR Operations';
@@ -284,7 +284,7 @@ export default function Home() {
 
                 <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:justify-start">
                   <Button as={Link} to={appPath} variant="primary" className="min-h-11 gap-2 px-7 text-[0.9375rem] btn-glow sm:w-auto min-[1024px]:min-h-11">
-                    {user ? 'Go to workspace' : 'Get started free'}
+                    {user ? 'Go to workspace' : 'Get started'}
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                   <Button
@@ -533,12 +533,9 @@ export default function Home() {
                   <ArrowRight className="h-5 w-5" />
                 </Button>
                 <Button as={Link} to="/login" variant="outline" className="min-h-12 border-[var(--border)] px-8">
-                  View demo login
+                  Sign in
                 </Button>
               </div>
-              <p className="mt-5 font-mono text-xs text-[var(--text-secondary)]">
-                Demo employer · admin@roster.com · admin123
-              </p>
             </div>
           </div>
         </section>

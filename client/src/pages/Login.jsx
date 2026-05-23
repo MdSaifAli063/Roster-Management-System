@@ -7,6 +7,7 @@ import { Input, Select } from '../components/ui/Input';
 import { getHomePath, ROLE_OPTIONS, ROLES } from '../lib/auth';
 import { isApiMisconfigured } from '../lib/apiConfig';
 import { cn } from '../lib/utils';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 
 function authErrorMessage(err) {
   const status = err.response?.status;
@@ -28,7 +29,7 @@ export default function Login() {
   const [role, setRole] = useState(ROLES.EMPLOYEE);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, signup } = useAuth();
+  const { login, signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirect');
@@ -50,6 +51,23 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login(email, password);
+      navigate(redirectTo || getHomePath(user.role));
+    } catch (err) {
+      setError(authErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async (credential) => {
+    setError('');
+    setLoading(true);
+    try {
+      const user = await loginWithGoogle({
+        credential,
+        role: mode === 'signup' ? role : undefined,
+        mode: mode === 'signup' ? 'signup' : 'signin',
+      });
       navigate(redirectTo || getHomePath(user.role));
     } catch (err) {
       setError(authErrorMessage(err));
@@ -135,33 +153,65 @@ export default function Login() {
           </div>
 
           {mode === 'signin' ? (
-            <form onSubmit={handleSignIn} className="space-y-4">
-              <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              <Input label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required error={error || undefined} />
-              {error && <p className="text-sm text-red-400">{error}</p>}
-              <Button type="submit" className="w-full btn-glow" variant="primary" disabled={loading}>
-                {loading ? 'Signing in…' : 'Sign in'}
-              </Button>
-              <p className="text-center font-mono text-xs text-[var(--text-secondary)]">
-                Demo: admin@roster.com / admin123
+            <div className="space-y-4">
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                {error && <p className="text-sm text-red-400">{error}</p>}
+                <Button type="submit" className="w-full btn-glow" variant="primary" disabled={loading}>
+                  {loading ? 'Signing in…' : 'Sign in'}
+                </Button>
+              </form>
+
+              <div className="relative py-1 text-center text-xs text-[var(--text-secondary)]">
+                <span className="relative z-10 bg-[var(--bg-elevated)] px-3">or</span>
+                <span className="absolute inset-x-0 top-1/2 border-t border-[var(--border)]" />
+              </div>
+
+              <GoogleAuthButton
+                mode="signin"
+                disabled={loading}
+                onSuccess={handleGoogleAuth}
+                onError={(err) => setError(err.message)}
+              />
+
+              <p className="text-center text-xs text-[var(--text-secondary)]">
+                Demo (all features free):{' '}
+                <span className="font-mono text-[var(--text-primary)]">demo@rosterpro.com</span>
+                {' / '}
+                <span className="font-mono text-[var(--text-primary)]">DemoPro2025!</span>
               </p>
-            </form>
+            </div>
           ) : (
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <Input label="Full name" value={name} onChange={(e) => setName(e.target.value)} required />
-              <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              <Select label="Role" value={role} onChange={(e) => setRole(e.target.value)} required>
-                {ROLE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </Select>
-              <Input label="Password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
-              <Input label="Confirm password" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-              {error && <p className="text-sm text-red-400">{error}</p>}
-              <Button type="submit" className="w-full btn-glow" variant="primary" disabled={loading}>
-                {loading ? 'Creating account…' : 'Create account'}
-              </Button>
-            </form>
+            <div className="space-y-4">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <Input label="Full name" value={name} onChange={(e) => setName(e.target.value)} required />
+                <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Select label="Role" value={role} onChange={(e) => setRole(e.target.value)} required>
+                  {ROLE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </Select>
+                <Input label="Password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+                <Input label="Confirm password" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+                {error && <p className="text-sm text-red-400">{error}</p>}
+                <Button type="submit" className="w-full btn-glow" variant="primary" disabled={loading}>
+                  {loading ? 'Creating account…' : 'Create account'}
+                </Button>
+              </form>
+
+              <div className="relative py-1 text-center text-xs text-[var(--text-secondary)]">
+                <span className="relative z-10 bg-[var(--bg-elevated)] px-3">or</span>
+                <span className="absolute inset-x-0 top-1/2 border-t border-[var(--border)]" />
+              </div>
+
+              <GoogleAuthButton
+                mode="signup"
+                disabled={loading}
+                onSuccess={handleGoogleAuth}
+                onError={(err) => setError(err.message)}
+              />
+            </div>
           )}
         </div>
       </div>
