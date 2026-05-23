@@ -9,6 +9,7 @@ export default function TrialBanner() {
   const { trialActive, trialDaysLeft, effectivePlanId, status } = usePlan();
 
   if (!user || !isEmployer(user.role)) return null;
+  if (status?.isDemoAccount) return null;
   if (!trialActive && effectivePlanId !== 'starter') return null;
 
   if (trialActive) {

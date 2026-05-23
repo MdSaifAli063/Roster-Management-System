@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { GoogleAuthConfigProvider } from './context/GoogleAuthConfigContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -44,6 +45,7 @@ function Employer({ children }) {
 export default function App() {
   return (
     <ThemeProvider>
+      <GoogleAuthConfigProvider>
       <AuthProvider>
         <PlanProvider>
         <NotificationProvider>
@@ -89,6 +91,7 @@ export default function App() {
         </NotificationProvider>
         </PlanProvider>
       </AuthProvider>
+      </GoogleAuthConfigProvider>
     </ThemeProvider>
   );
 }

@@ -9,11 +9,12 @@ const STORAGE_KEY = 'rosterpro_trial_expired_seen';
 
 export default function TrialExpiredModal() {
   const { user } = useAuth();
-  const { trialActive, effectivePlanId, trialDaysLeft, status } = usePlan();
+  const { trialActive, effectivePlanId, status } = usePlan();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!user || !isEmployer(user.role)) return;
+    if (status?.isDemoAccount) return;
     if (trialActive) return;
     if (effectivePlanId !== 'starter') return;
     if (!status?.trialEndsAt) return;
