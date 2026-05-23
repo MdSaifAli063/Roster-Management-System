@@ -3,6 +3,7 @@ import api from '../api/client';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
+import PageShell from '../components/layout/PageShell';
 
 export default function Assignments() {
   const [assignments, setAssignments] = useState([]);
@@ -27,9 +28,7 @@ export default function Assignments() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Work Reassignment</h1>
-
+    <PageShell subtitle="Assign coverage when employees are on leave or unavailable.">
       <Card title="Assign Coverage">
         <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
           <Select label="From Employee" value={form.from_emp_id} onChange={(e) => setForm({ ...form, from_emp_id: e.target.value })} required>
@@ -69,6 +68,6 @@ export default function Assignments() {
         </table>
         </div>
       </Card>
-    </div>
+    </PageShell>
   );
 }

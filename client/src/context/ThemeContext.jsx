@@ -14,7 +14,7 @@ function resolveTheme(mode) {
 function getInitialTheme() {
   const stored = localStorage.getItem('theme');
   if (stored === 'dark' || stored === 'light' || stored === 'system') return stored;
-  return 'dark';
+  return 'light';
 }
 
 function applyResolved(mode) {

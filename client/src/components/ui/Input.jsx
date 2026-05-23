@@ -1,6 +1,6 @@
 import { cn } from '../../lib/utils';
 
-const labelClass = 'text-[11px] font-medium uppercase tracking-wider text-[var(--text-secondary)]';
+const labelClass = 'text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400';
 
 export function Input({ label, className, error, success, ...props }) {
   return (

@@ -12,6 +12,7 @@ import AttendanceDeptGauge from '../components/attendance/AttendanceDeptGauge';
 import AttendanceListTable from '../components/attendance/AttendanceListTable';
 import { eachDate } from '../lib/utils';
 import { cn } from '../lib/utils';
+import PageShell from '../components/layout/PageShell';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -117,16 +118,10 @@ export default function ActualRoster() {
   const stats = data?.stats;
 
   return (
-    <div className="-mx-3 -mt-2 space-y-6 sm:-mx-5 md:-mx-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Workforce</p>
-          <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Attendance</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Track employee attendance and manage daily records.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+    <PageShell
+      subtitle="Track employee attendance and manage daily records."
+      actions={
+        <>
           <button
             type="button"
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-blue-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
@@ -136,8 +131,9 @@ export default function ActualRoster() {
             <Timer className="h-4 w-4 text-blue-600" />
           </button>
           <DashboardDateRangePicker from={rangeFrom} to={rangeTo} onChange={handleRangeChange} />
-        </div>
-      </div>
+        </>
+      }
+    >
 
       <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-700 dark:bg-slate-800/50">
         {TABS.map((tab) => (
@@ -296,6 +292,6 @@ export default function ActualRoster() {
           </Card>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
