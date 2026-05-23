@@ -1,18 +1,5 @@
 -- Subscription & payments (non-destructive)
-
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(100);
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(100);
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paypal_subscription_id VARCHAR(100);
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS razorpay_subscription_id VARCHAR(100);
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS plan_id VARCHAR(20) DEFAULT 'starter';
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'active';
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP;
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMP;
-ALTER TABLE businesses ADD COLUMN IF NOT EXISTS billing_interval VARCHAR(10);
-
-ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS razorpay_monthly_plan_id VARCHAR(100);
-ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS razorpay_annual_plan_id VARCHAR(100);
-ALTER TABLE payment_history ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(100);
+-- Order: CREATE tables first, then ALTER (safe on fresh and existing DBs)
 
 CREATE TABLE IF NOT EXISTS subscription_plans (
   id VARCHAR(20) PRIMARY KEY,
@@ -48,8 +35,6 @@ CREATE TABLE IF NOT EXISTS payment_history (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_payment_history_business ON payment_history(business_id, created_at DESC);
-
 CREATE TABLE IF NOT EXISTS trials (
   id SERIAL PRIMARY KEY,
   business_id INT REFERENCES businesses(id) ON DELETE CASCADE,
@@ -59,4 +44,19 @@ CREATE TABLE IF NOT EXISTS trials (
   converted BOOLEAN DEFAULT FALSE
 );
 
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(100);
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS stripe_subscription_id VARCHAR(100);
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS paypal_subscription_id VARCHAR(100);
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS razorpay_subscription_id VARCHAR(100);
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS plan_id VARCHAR(20) DEFAULT 'starter';
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'active';
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS current_period_end TIMESTAMP;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS billing_interval VARCHAR(10);
+
+ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS razorpay_monthly_plan_id VARCHAR(100);
+ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS razorpay_annual_plan_id VARCHAR(100);
+ALTER TABLE payment_history ADD COLUMN IF NOT EXISTS razorpay_payment_id VARCHAR(100);
+
+CREATE INDEX IF NOT EXISTS idx_payment_history_business ON payment_history(business_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_trials_business ON trials(business_id);

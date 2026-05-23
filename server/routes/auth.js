@@ -50,12 +50,17 @@ function validatePassword(password) {
 
 async function onboardEmployer(user, businessLabel) {
   const biz = await ensureBusinessForOwner(user.id, businessLabel);
-  const endsAt = await startProfessionalTrial(biz.id);
-  await emailTrialStarted({
-    to: user.email,
-    businessName: biz.business_name,
-    endsAt,
-  });
+  try {
+    const endsAt = await startProfessionalTrial(biz.id);
+    await emailTrialStarted({
+      to: user.email,
+      businessName: biz.business_name,
+      endsAt,
+    });
+  } catch (err) {
+    console.warn('Employer onboarding (trial/email):', err.message);
+  }
+  return biz;
 }
 
 router.get('/config', (_req, res) => {
@@ -169,8 +174,10 @@ router.post('/signup', async (req, res) => {
 
     res.status(201).json({ token, user: publicUser(user) });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Registration failed' });
+    console.error('Signup error:', err);
+    res.status(500).json({
+      error: process.env.NODE_ENV !== 'production' ? err.message : 'Registration failed',
+    });
   }
 });
 
