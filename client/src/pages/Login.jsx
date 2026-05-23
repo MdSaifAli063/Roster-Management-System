@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Calendar } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import Logo from '../components/Logo';
+import AuthMarketingPanel from '../components/auth/AuthMarketingPanel';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import Button from '../components/ui/Button';
-import { Input, Select } from '../components/ui/Input';
 import { getHomePath, ROLE_OPTIONS, ROLES } from '../lib/auth';
 import { isApiMisconfigured } from '../lib/apiConfig';
 import { cn } from '../lib/utils';
 import GoogleAuthButton from '../components/GoogleAuthButton';
+
+const inputClass =
+  'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500';
+
+const selectClass =
+  'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
 
 function authErrorMessage(err) {
   const status = err.response?.status;
@@ -20,6 +28,64 @@ function authErrorMessage(err) {
   return err.response?.data?.error || err.message || 'Request failed';
 }
 
+function AuthLabel({ children, required }) {
+  return (
+    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+      {children}
+      {required && <span className="ml-0.5 text-red-500">*</span>}
+    </span>
+  );
+}
+
+function AuthField({
+  label,
+  required,
+  type = 'text',
+  showToggle,
+  visible,
+  onToggleVisible,
+  className,
+  ...props
+}) {
+  const isPassword = type === 'password' && showToggle;
+  const inputType = isPassword ? (visible ? 'text' : 'password') : type;
+
+  return (
+    <label className="block space-y-1.5">
+      <AuthLabel required={required}>{label}</AuthLabel>
+      <div className="relative">
+        <input
+          type={inputType}
+          required={required}
+          className={cn(inputClass, isPassword && 'pr-11', className)}
+          {...props}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={onToggleVisible}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            aria-label={visible ? 'Hide password' : 'Show password'}
+          >
+            {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        )}
+      </div>
+    </label>
+  );
+}
+
+function AuthDivider({ children }) {
+  return (
+    <div className="relative py-1.5">
+      <div className="absolute inset-x-0 top-1/2 border-t border-slate-200 dark:border-slate-700" />
+      <p className="relative mx-auto w-fit bg-white px-3 text-center text-xs text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+        {children}
+      </p>
+    </div>
+  );
+}
+
 export default function Login() {
   const [mode, setMode] = useState('signin');
   const [name, setName] = useState('');
@@ -27,12 +93,16 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState(ROLES.EMPLOYEE);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, signup, loginWithGoogle } = useAuth();
+  const { dark } = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get('redirect');
+  const isSignUp = mode === 'signup';
 
   useEffect(() => {
     if (searchParams.get('mode') === 'signup') setMode('signup');
@@ -44,6 +114,16 @@ export default function Login() {
       setError('');
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    document.documentElement.classList.add('auth-page-lock');
+    return () => document.documentElement.classList.remove('auth-page-lock');
+  }, []);
+
+  const switchMode = (next) => {
+    setMode(next);
+    setError('');
+  };
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -65,8 +145,8 @@ export default function Login() {
     try {
       const user = await loginWithGoogle({
         credential,
-        role: mode === 'signup' ? role : undefined,
-        mode: mode === 'signup' ? 'signup' : 'signin',
+        role: isSignUp ? role : undefined,
+        mode: isSignUp ? 'signup' : 'signin',
       });
       navigate(redirectTo || getHomePath(user.role));
     } catch (err) {
@@ -95,126 +175,205 @@ export default function Login() {
   };
 
   return (
-    <div className="mesh-bg flex min-h-screen min-h-[100dvh] flex-col overflow-x-hidden bg-[var(--bg-primary)] lg:flex-row">
-      <div className="relative hidden flex-1 flex-col justify-center overflow-hidden p-12 lg:flex">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0f1e] via-[#111827] to-[#0d1428]" />
-        <div className="relative z-10 max-w-lg">
-          <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-[0_0_40px_rgba(59,130,246,0.4)]">
-            <Calendar className="h-7 w-7 text-white" />
-          </div>
-          <h1 className="font-display text-4xl font-extrabold tracking-tight text-white">RosterPro</h1>
-          <p className="mt-2 text-lg text-blue-300/80">Premium Enterprise Roster Management</p>
-          <p className="mt-6 text-slate-400 leading-relaxed">
-            Manage shifts, attendance, holidays, and reports — all in one unified platform built for modern teams.
-          </p>
-        </div>
-      </div>
-
-      <div className="relative z-10 flex flex-1 items-center justify-center p-4 sm:p-6 md:p-8">
-        <div className="glass-card w-full max-w-md p-6 shadow-2xl sm:p-8 animate-scale-in">
-          <Link to="/" className="mb-4 inline-flex items-center text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">
+    <div className="flex h-dvh max-h-dvh w-full overflow-hidden bg-white dark:bg-slate-950">
+      {/* Left panel — fixed width matches sign-in & sign-up */}
+      <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:w-[520px] lg:shrink-0 xl:w-[540px]">
+        <div className="flex min-h-0 flex-1 flex-col justify-center overflow-hidden px-6 py-6 sm:px-10 lg:px-12">
+          <Link
+            to="/"
+            className="mb-4 shrink-0 text-sm font-medium text-slate-500 transition-colors hover:text-blue-600 dark:text-slate-400 lg:hidden"
+          >
             ← Back to home
           </Link>
-          <div className="mb-6 lg:hidden">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500">
-              <Calendar className="h-5 w-5 text-white" />
-            </div>
-            <h2 className="font-display text-2xl font-bold text-[var(--text-primary)]">RosterPro</h2>
-          </div>
 
-          {searchParams.get('checkout') === 'success' && (
-            <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
-              Payment received — create your employer account with the same email to activate your plan.
+          <div className="mx-auto flex w-full max-w-[400px] min-h-0 flex-col justify-center">
+            <div className="mb-5 flex shrink-0 justify-center lg:justify-start">
+              <Logo variant="full" size="lg" theme={dark ? 'dark' : 'light'} linkTo="/" />
             </div>
-          )}
 
-          {isApiMisconfigured() && (
-            <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-              Invalid <strong>VITE_API_URL</strong>. Remove it for Vercel all-in-one deploy, or set a full https://…/api URL.
-            </div>
-          )}
+            <h1 className="shrink-0 text-center font-display text-2xl font-bold leading-snug text-slate-900 dark:text-white sm:text-[1.65rem] lg:text-left">
+              {isSignUp ? 'Create your RosterPro account' : 'Welcome back to RosterPro'}
+            </h1>
+            <p className="mt-2 min-h-[2.75rem] shrink-0 text-center text-sm leading-relaxed text-slate-500 dark:text-slate-400 lg:text-left">
+              {isSignUp
+                ? 'Ready to manage your workforce more efficiently? Create your account to get started.'
+                : 'Ready to manage your workforce more efficiently? Log in to your account.'}
+            </p>
 
-          <div className="mb-6 flex rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-1">
-            {['signin', 'signup'].map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => { setMode(tab); setError(''); }}
-                className={cn(
-                  'flex-1 rounded-md py-2 text-sm font-medium transition-all duration-200',
-                  mode === tab
-                    ? 'bg-blue-500/20 text-blue-300 shadow-sm'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+            {searchParams.get('checkout') === 'success' && (
+              <div className="mt-3 shrink-0 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+                Payment received — sign up with the same email to activate your plan.
+              </div>
+            )}
+
+            {isApiMisconfigured() && (
+              <div className="mt-3 shrink-0 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+                Invalid <strong>VITE_API_URL</strong>.
+              </div>
+            )}
+
+            <div className="mt-5 shrink-0 space-y-3.5">
+              <GoogleAuthButton
+                mode={isSignUp ? 'signup' : 'signin'}
+                variant="auth"
+                disabled={loading}
+                onSuccess={handleGoogleAuth}
+                onError={(err) => setError(err.message)}
+              />
+
+              <AuthDivider>
+                {isSignUp ? 'Or sign up manually with email' : 'Or login manually with email'}
+              </AuthDivider>
+
+              {/* Fixed-height form area keeps sign-in / sign-up panels identical */}
+              <div className="min-h-[292px]">
+                {isSignUp ? (
+                  <form onSubmit={handleSignUp} className="space-y-2.5">
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <AuthField
+                        label="Full name"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Full name"
+                        autoComplete="name"
+                      />
+                      <AuthField
+                        label="Email address"
+                        required
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Email address"
+                        autoComplete="email"
+                      />
+                    </div>
+                    <label className="block space-y-1.5">
+                      <AuthLabel required>Role</AuthLabel>
+                      <select
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        className={selectClass}
+                        required
+                      >
+                        {ROLE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <AuthField
+                        label="Password"
+                        required
+                        type="password"
+                        showToggle
+                        visible={showPassword}
+                        onToggleVisible={() => setShowPassword((v) => !v)}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Password"
+                        autoComplete="new-password"
+                        minLength={8}
+                      />
+                      <AuthField
+                        label="Confirm password"
+                        required
+                        type="password"
+                        showToggle
+                        visible={showConfirm}
+                        onToggleVisible={() => setShowConfirm((v) => !v)}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm"
+                        autoComplete="new-password"
+                      />
+                    </div>
+                    <div className="h-5" aria-hidden />
+                    {error && <p className="text-sm text-red-500">{error}</p>}
+                    <Button
+                      type="submit"
+                      className="w-full min-h-11 rounded-xl text-base font-semibold"
+                      variant="primary"
+                      disabled={loading}
+                    >
+                      {loading ? 'Creating account…' : 'Create account'}
+                    </Button>
+                    <p className="min-h-[1.25rem] text-center text-xs text-transparent" aria-hidden>
+                      placeholder
+                    </p>
+                  </form>
+                ) : (
+                  <form onSubmit={handleSignIn} className="space-y-3">
+                    <AuthField
+                      label="Email address"
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email address"
+                      autoComplete="email"
+                    />
+                    <AuthField
+                      label="Password"
+                      required
+                      type="password"
+                      showToggle
+                      visible={showPassword}
+                      onToggleVisible={() => setShowPassword((v) => !v)}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
+                    />
+                    <div className="flex h-5 items-center justify-end">
+                      <Link
+                        to="/login"
+                        className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setError('Password reset is not available yet. Contact your administrator.');
+                        }}
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
+                    {error && <p className="text-sm text-red-500">{error}</p>}
+                    <Button
+                      type="submit"
+                      className="w-full min-h-11 rounded-xl text-base font-semibold"
+                      variant="primary"
+                      disabled={loading}
+                    >
+                      {loading ? 'Signing in…' : 'Login'}
+                    </Button>
+                    <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+                      Demo:{' '}
+                      <span className="font-mono text-slate-700 dark:text-slate-300">demo@rosterpro.com</span>
+                      {' / '}
+                      <span className="font-mono text-slate-700 dark:text-slate-300">DemoPro2025!</span>
+                    </p>
+                  </form>
                 )}
+              </div>
+            </div>
+
+            <p className="mt-6 shrink-0 text-center text-sm text-slate-600 dark:text-slate-400">
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              <button
+                type="button"
+                onClick={() => switchMode(isSignUp ? 'signin' : 'signup')}
+                className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
               >
-                {tab === 'signin' ? 'Sign in' : 'Sign up'}
+                {isSignUp ? 'Sign in' : 'Sign up'}
               </button>
-            ))}
+            </p>
           </div>
-
-          {mode === 'signin' ? (
-            <div className="space-y-4">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                <Input label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                {error && <p className="text-sm text-red-400">{error}</p>}
-                <Button type="submit" className="w-full btn-glow" variant="primary" disabled={loading}>
-                  {loading ? 'Signing in…' : 'Sign in'}
-                </Button>
-              </form>
-
-              <div className="relative py-1 text-center text-xs text-[var(--text-secondary)]">
-                <span className="relative z-10 bg-[var(--bg-elevated)] px-3">or</span>
-                <span className="absolute inset-x-0 top-1/2 border-t border-[var(--border)]" />
-              </div>
-
-              <GoogleAuthButton
-                mode="signin"
-                disabled={loading}
-                onSuccess={handleGoogleAuth}
-                onError={(err) => setError(err.message)}
-              />
-
-              <p className="text-center text-xs text-[var(--text-secondary)]">
-                Demo (all features free):{' '}
-                <span className="font-mono text-[var(--text-primary)]">demo@rosterpro.com</span>
-                {' / '}
-                <span className="font-mono text-[var(--text-primary)]">DemoPro2025!</span>
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <Input label="Full name" value={name} onChange={(e) => setName(e.target.value)} required />
-                <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                <Select label="Role" value={role} onChange={(e) => setRole(e.target.value)} required>
-                  {ROLE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </Select>
-                <Input label="Password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
-                <Input label="Confirm password" type="password" autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
-                {error && <p className="text-sm text-red-400">{error}</p>}
-                <Button type="submit" className="w-full btn-glow" variant="primary" disabled={loading}>
-                  {loading ? 'Creating account…' : 'Create account'}
-                </Button>
-              </form>
-
-              <div className="relative py-1 text-center text-xs text-[var(--text-secondary)]">
-                <span className="relative z-10 bg-[var(--bg-elevated)] px-3">or</span>
-                <span className="absolute inset-x-0 top-1/2 border-t border-[var(--border)]" />
-              </div>
-
-              <GoogleAuthButton
-                mode="signup"
-                disabled={loading}
-                onSuccess={handleGoogleAuth}
-                onError={(err) => setError(err.message)}
-              />
-            </div>
-          )}
         </div>
       </div>
+
+      <AuthMarketingPanel />
     </div>
   );
 }

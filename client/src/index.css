@@ -347,6 +347,12 @@ h1, h2, h3, h4, h5 {
   box-shadow: var(--landing-header-shadow);
 }
 
+html.auth-page-lock,
+html.auth-page-lock body {
+  overflow: hidden;
+  height: 100%;
+}
+
 .landing-section-alt {
   background: var(--landing-section-alt);
 }

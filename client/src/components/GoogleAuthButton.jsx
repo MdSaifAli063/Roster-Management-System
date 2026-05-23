@@ -1,5 +1,6 @@
 import { GoogleLogin } from '@react-oauth/google';
 import { useGoogleAuthConfig } from '../context/GoogleAuthConfigContext';
+import { cn } from '../lib/utils';
 
 function GoogleIcon() {
   return (
@@ -12,49 +13,105 @@ function GoogleIcon() {
   );
 }
 
+const pillVisualClass = cn(
+  'pointer-events-none flex min-h-11 w-full items-center justify-center gap-3 rounded-full border border-slate-200 bg-white px-5 text-sm font-medium text-slate-700 shadow-sm',
+  'dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100'
+);
+
+function GoogleLoginLayer({ label, gsiText, disabled, onSuccess, onError }) {
+  return (
+    <div
+      className={cn(
+        'absolute inset-0 z-10 overflow-hidden rounded-full opacity-[0.011]',
+        '[&>div]:!h-full [&>div]:!w-full',
+        disabled && 'pointer-events-none'
+      )}
+      aria-label={label}
+    >
+      <GoogleLogin
+        onSuccess={(res) => {
+          if (res.credential) onSuccess(res.credential);
+          else onError?.(new Error('Google did not return a credential'));
+        }}
+        onError={() => onError?.(new Error('Google sign-in was cancelled or failed'))}
+        useOneTap={false}
+        theme="outline"
+        size="large"
+        text={gsiText}
+        shape="pill"
+        width="400"
+      />
+    </div>
+  );
+}
+
 /**
  * @param {'signin' | 'signup'} mode
+ * @param {'auth' | 'default'} variant — auth = pill style for login page
  */
-export default function GoogleAuthButton({ mode = 'signin', onSuccess, onError, disabled }) {
+export default function GoogleAuthButton({
+  mode = 'signin',
+  variant = 'default',
+  onSuccess,
+  onError,
+  disabled,
+}) {
   const { configured, loading } = useGoogleAuthConfig();
-  const label = mode === 'signup' ? 'Sign up with Google' : 'Sign in with Google';
+  const label = mode === 'signup' ? 'Sign up with Google' : 'Login with Google';
   const gsiText = mode === 'signup' ? 'signup_with' : 'signin_with';
 
   if (loading) {
     return (
-      <button
-        type="button"
-        disabled
-        className="flex w-full min-h-11 items-center justify-center gap-3 rounded-lg border border-[var(--border)] bg-white px-4 text-sm font-medium opacity-70 dark:bg-[var(--bg-secondary)]"
-      >
-        <GoogleIcon />
-        {label}
-      </button>
+      <div className={variant === 'auth' ? 'relative w-full' : 'w-full'}>
+        <div className={variant === 'auth' ? pillVisualClass : 'flex min-h-11 w-full items-center justify-center gap-3 rounded-lg border border-[var(--border)] bg-white px-4 text-sm font-medium opacity-70'}>
+          <GoogleIcon />
+          {label}
+        </div>
+      </div>
     );
   }
 
   if (!configured) {
     return (
       <div className="w-full">
-        <button
-          type="button"
-          disabled
-          className="flex w-full min-h-11 items-center justify-center gap-3 rounded-lg border border-[var(--border)] bg-white px-4 text-sm font-medium text-[var(--text-secondary)] dark:bg-[var(--bg-secondary)]"
-        >
+        <div className={variant === 'auth' ? pillVisualClass : 'flex min-h-11 w-full items-center justify-center gap-3 rounded-lg border border-[var(--border)] bg-white px-4 text-sm font-medium text-[var(--text-secondary)] opacity-70'}>
           <GoogleIcon />
           {label}
-        </button>
+        </div>
+        {variant === 'auth' && (
+          <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+            Google Sign-In is not configured on this server.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (variant === 'auth') {
+    return (
+      <div className="relative w-full">
+        <div className={pillVisualClass}>
+          <GoogleIcon />
+          {label}
+        </div>
+        <GoogleLoginLayer
+          label={label}
+          gsiText={gsiText}
+          disabled={disabled}
+          onSuccess={onSuccess}
+          onError={onError}
+        />
       </div>
     );
   }
 
   return (
     <div
-      className={[
+      className={cn(
         'flex w-full justify-center rounded-lg border border-[var(--border)] bg-white py-0.5 dark:bg-[var(--bg-secondary)]',
         '[&>div]:!w-full [&>div]:!flex [&>div]:!justify-center',
-        disabled ? 'pointer-events-none opacity-50' : '',
-      ].join(' ')}
+        disabled && 'pointer-events-none opacity-50'
+      )}
       aria-label={label}
     >
       <GoogleLogin

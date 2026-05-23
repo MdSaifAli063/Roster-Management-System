@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import Button from './ui/Button';
+import Logo from './Logo';
 import { ThemeToggleButton } from './ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 import { getHomePath } from '../lib/auth';
@@ -56,18 +57,8 @@ export default function LandingHeader({ active = 'home' }) {
 
   return (
     <header className="landing-header sticky top-0 z-50 border-b border-[var(--border)] backdrop-blur-xl">
-      <div className="landing-container flex h-14 items-center justify-between gap-3 sm:h-16">
-        <Link to="/" className="flex min-w-0 items-center gap-2.5" onClick={closeMenu}>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-500/25 dark:shadow-blue-500/35">
-            <Calendar className="h-5 w-5 text-white" />
-          </div>
-          <div className="min-w-0">
-            <span className="block truncate font-display text-lg font-bold leading-tight sm:text-xl">RosterPro</span>
-            <span className="hidden text-[10px] font-medium text-[var(--text-secondary)] sm:block">
-              HR roster &amp; operations
-            </span>
-          </div>
-        </Link>
+      <div className="landing-container flex h-16 items-center justify-between gap-3 sm:h-[4.75rem]">
+        <Logo linkTo="/" onClick={closeMenu} variant="full" size="md" />
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
           {SECTION_LINKS.map(({ id, label }) => (

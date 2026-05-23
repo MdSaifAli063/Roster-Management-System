@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Calendar,
   CalendarCheck,
   Users,
   Plane,
@@ -27,6 +26,7 @@ import {
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import LandingHeader from '../components/LandingHeader';
+import Logo from '../components/Logo';
 import { ThemeToggleButton } from '../components/ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 import { getHomePath } from '../lib/auth';
@@ -543,15 +543,7 @@ export default function Home() {
 
       <footer className="relative z-10 border-t border-[var(--border)] bg-[var(--bg-secondary)] py-10">
         <div className="landing-container flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-md">
-              <Calendar className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <span className="font-display text-lg font-semibold">RosterPro</span>
-              <p className="text-xs text-[var(--text-secondary)]">Roster · Leave · Attendance · Finance</p>
-            </div>
-          </div>
+          <Logo variant="full" size="lg" />
           <nav className="flex flex-wrap justify-center gap-4 text-sm text-[var(--text-secondary)] sm:justify-end">
             {navIds.map(({ id, label }) => (
               <button key={id} type="button" onClick={() => scrollTo(id)} className="hover:text-[var(--accent-primary)]">

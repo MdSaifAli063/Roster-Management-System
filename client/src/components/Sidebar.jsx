@@ -3,6 +3,7 @@ import {
   LayoutDashboard, Calendar, CalendarDays, CalendarCheck, Palmtree, FileBarChart, FileText,
   Settings, Eye, Plane, UserCircle, X, LogOut, ChevronLeft, Pencil, Wallet, UserCog, CreditCard, Tag,
 } from 'lucide-react';
+import Logo from './Logo';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { getRoleLabel, isEmployer } from '../lib/auth';
@@ -96,22 +97,14 @@ export default function Sidebar({ collapsed, mobileOpen, onMobileClose, onToggle
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
-        <div className="flex h-16 items-center justify-between gap-2 border-b px-4" style={{ borderColor: 'var(--sidebar-border)' }}>
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-md">
-              <Calendar className="h-5 w-5 text-white" />
-            </div>
-            {showLabels && (
-              <div className="min-w-0">
-                <span className="block truncate font-display text-base font-bold" style={{ color: 'var(--sidebar-text)' }}>
-                  RosterPro
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--sidebar-section)' }}>
-                  {employer ? 'Employer' : 'Employee'}
-                </span>
-              </div>
+        <div className="flex h-[4.5rem] items-center justify-between gap-2 border-b px-3 sm:px-4" style={{ borderColor: 'var(--sidebar-border)' }}>
+          <Link to="/dashboard" className="flex min-w-0 flex-1 items-center overflow-visible" onClick={onMobileClose}>
+            {showLabels ? (
+              <Logo variant="full" size="md" />
+            ) : (
+              <Logo variant="mark" size="md" />
             )}
-          </div>
+          </Link>
           <button type="button" className="sidebar-icon-btn rounded-lg p-2 lg:hidden" onClick={onMobileClose} aria-label="Close menu">
             <X className="h-5 w-5" />
           </button>
