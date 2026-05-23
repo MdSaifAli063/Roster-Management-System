@@ -4,6 +4,8 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { formatTime } from '../lib/utils';
+import PageShell from '../components/layout/PageShell';
+import { cn } from '../lib/utils';
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
@@ -37,11 +39,21 @@ export default function Shifts() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Shifts</h1>
-      <div className="flex gap-2">
-        <Button variant={tab === 'shifts' ? 'teal' : 'secondary'} onClick={() => setTab('shifts')}>Shifts</Button>
-        <Button variant={tab === 'patterns' ? 'teal' : 'secondary'} onClick={() => setTab('patterns')}>Patterns</Button>
+    <PageShell subtitle="Define shift times and weekly patterns for roster generation.">
+      <div className="inline-flex gap-1 rounded-xl border border-slate-200 bg-slate-50/80 p-1 dark:border-slate-700 dark:bg-slate-800/50">
+        {['shifts', 'patterns'].map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={cn(
+              'rounded-lg px-4 py-2 text-sm font-semibold capitalize transition',
+              tab === t ? 'bg-white text-blue-600 shadow-sm dark:bg-slate-900 dark:text-blue-400' : 'text-slate-500'
+            )}
+          >
+            {t}
+          </button>
+        ))}
       </div>
 
       {tab === 'shifts' && (
@@ -129,6 +141,6 @@ export default function Shifts() {
           </Card>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }

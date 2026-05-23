@@ -4,6 +4,7 @@ import api from '../api/client';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
+import PageShell from '../components/layout/PageShell';
 
 export default function StaffDetail() {
   const { id } = useParams();
@@ -31,13 +32,20 @@ export default function StaffDetail() {
     }
   };
 
-  if (!data) return <p className="text-[var(--text-secondary)]">Loading…</p>;
+  if (!data) {
+    return (
+      <PageShell title="Staff member" subtitle="Loading…" maxWidth="lg">
+        <div className="h-32 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
+      </PageShell>
+    );
+  }
   const e = editing ? form : data.employee;
 
   return (
-    <div className="space-y-6">
-      <Link to="/staff" className="text-sm text-[var(--accent-primary)]">← Back to staff</Link>
-      <h1 className="font-display text-2xl font-bold text-[var(--text-primary)]">{data.employee.emp_name}</h1>
+    <PageShell title={data.employee.emp_name} maxWidth="lg" subtitle={`Employee #${data.employee.emp_code}`}>
+      <Link to="/staff" className="inline-flex text-sm font-semibold text-blue-600 hover:text-blue-700">
+        ← Back to staff
+      </Link>
 
       <Card title="Profile">
         {editing ? (
@@ -85,6 +93,6 @@ export default function StaffDetail() {
           ))}
         </ul>
       </Card>
-    </div>
+    </PageShell>
   );
 }

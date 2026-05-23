@@ -4,8 +4,8 @@ import { Pencil, Save, Building2, Upload, CreditCard, Mail, ExternalLink } from 
 import api from '../api/client';
 import Button from '../components/ui/Button';
 import { Input, Select, Toggle } from '../components/ui/Input';
+import PageShell from '../components/layout/PageShell';
 import {
-  SettingsPageHeader,
   SettingsTabs,
   SettingsSection,
   SettingsFormRow,
@@ -175,11 +175,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="-mx-3 -mt-2 space-y-6 pb-10 sm:-mx-5 md:-mx-6">
-      <SettingsPageHeader
-        title="Settings"
-        subtitle="Customize system preferences and configurations."
-      />
+    <PageShell subtitle="Customize system preferences and configurations." className="pb-10">
 
       <SettingsTabs tabs={tabs} active={tab} onChange={setTab} />
 
@@ -474,6 +470,6 @@ export default function Settings() {
           </p>
         </SettingsSection>
       )}
-    </div>
+    </PageShell>
   );
 }

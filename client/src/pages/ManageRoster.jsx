@@ -6,7 +6,7 @@ import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import EmployeeFilterForm, { buildQuery } from '../components/EmployeeFilterForm';
 import RosterTimelineEditor from '../components/RosterTimelineEditor';
-import PageHeader from '../components/PageHeader';
+import PageShell from '../components/layout/PageShell';
 
 export default function ManageRoster() {
   const location = useLocation();
@@ -122,8 +122,7 @@ export default function ManageRoster() {
 
   if (step === 3) {
     return (
-      <div className="space-y-4">
-        <PageHeader pathname={location.pathname} subtitle={`${startDate} → ${endDate} · timeline editor`} />
+      <PageShell subtitle={`${startDate} → ${endDate} · timeline editor`}>
         <RosterTimelineEditor
           startDate={startDate}
           endDate={endDate}
@@ -131,16 +130,14 @@ export default function ManageRoster() {
           initialEmployees={editorEmployees}
           onExit={() => setStep(2)}
         />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        pathname={location.pathname}
-        subtitle={step === 0 ? 'Start from a previous period or a blank roster' : 'Configure period and staff, then open the timeline editor'}
-      />
+    <PageShell
+      subtitle={step === 0 ? 'Start from a previous period or a blank roster' : 'Configure period and staff, then open the timeline editor'}
+    >
 
       {step === 0 && (
         <Card title="How do you want to start?">
@@ -231,6 +228,6 @@ export default function ManageRoster() {
           </p>
         </Card>
       )}
-    </div>
+    </PageShell>
   );
 }

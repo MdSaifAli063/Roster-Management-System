@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import Card from '../components/ui/Card';
+import PageShell from '../components/layout/PageShell';
+import AuthBackLink from '../components/auth/AuthBackLink';
 import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 
@@ -48,9 +50,14 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-6">
-      <h1 className="font-display text-2xl font-bold text-[var(--text-primary)]">Set up your business</h1>
-      <p className="text-sm text-[var(--text-secondary)]">Step {step} of 5</p>
+    <PageShell
+      title="Set up your business"
+      eyebrow="Welcome"
+      maxWidth="sm"
+      subtitle={`Step ${step} of 5`}
+      shell={false}
+      actions={<AuthBackLink to="/dashboard" label="Back to dashboard" />}
+    >
 
       {step === 1 && (
         <Card title="Business details">
@@ -126,6 +133,6 @@ export default function Onboarding() {
           <Button className="mt-4" variant="primary" onClick={() => saveStep(true)} disabled={saving}>Finish setup</Button>
         </Card>
       )}
-    </div>
+    </PageShell>
   );
 }

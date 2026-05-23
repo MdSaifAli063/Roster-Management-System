@@ -15,7 +15,7 @@ import {
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import PageHeader from '../components/PageHeader';
+import PageShell from '../components/layout/PageShell';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input, Select, Toggle } from '../components/ui/Input';
@@ -135,10 +135,9 @@ export default function Organization() {
 
   if (loading || !form) {
     return (
-      <div className="mx-auto max-w-4xl space-y-4">
-        <PageHeader pathname={location.pathname} subtitle="Loading organization…" />
+      <PageShell maxWidth="lg" subtitle="Loading organization…">
         <div className="h-40 animate-pulse rounded-2xl bg-slate-100 dark:bg-slate-800" />
-      </div>
+      </PageShell>
     );
   }
 
@@ -146,17 +145,17 @@ export default function Organization() {
   const sub = data?.subscription || {};
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-8">
-      <PageHeader
-        pathname={location.pathname}
-        subtitle="Manage your company profile, locations, roster rules, and workforce policies."
-        actions={
-          <Button variant="primary" onClick={save} disabled={saving}>
-            <Save className="h-4 w-4" />
-            {saving ? 'Saving…' : 'Save changes'}
-          </Button>
-        }
-      />
+    <PageShell
+      maxWidth="lg"
+      className="pb-8"
+      subtitle="Manage your company profile, locations, roster rules, and workforce policies."
+      actions={
+        <Button variant="primary" onClick={save} disabled={saving}>
+          <Save className="h-4 w-4" />
+          {saving ? 'Saving…' : 'Save changes'}
+        </Button>
+      }
+    >
 
       <DashboardPanel className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/25">
@@ -433,6 +432,6 @@ export default function Organization() {
           {saving ? 'Saving…' : 'Save organization'}
         </Button>
       </div>
-    </div>
+    </PageShell>
   );
 }

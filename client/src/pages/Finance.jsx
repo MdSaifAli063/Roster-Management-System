@@ -7,6 +7,7 @@ import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import { cn } from '../lib/utils';
 import PlanGate from '../components/PlanGate';
+import PageShell from '../components/layout/PageShell';
 import { useToast } from '../context/ToastContext';
 
 const STATUS_STYLES = {
@@ -59,11 +60,14 @@ export default function Finance() {
 
   return (
     <PlanGate feature="finance">
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-bold text-[var(--text-primary)]">Finance Organiser</h1>
-        <Button variant="secondary" onClick={() => navigate('/pdf-extractor')}>Extract invoice PDF</Button>
-      </div>
+    <PageShell
+      subtitle="Track invoices, suppliers, and payment status."
+      actions={
+        <Button variant="secondary" onClick={() => navigate('/pdf-extractor')}>
+          Extract invoice PDF
+        </Button>
+      }
+    >
 
       {summary && (
         <div className="grid gap-4 sm:grid-cols-3">
@@ -157,7 +161,7 @@ export default function Finance() {
           </table>
         </div>
       </Card>
-    </div>
+    </PageShell>
     </PlanGate>
   );
 }

@@ -12,7 +12,7 @@ import { eachDate as dateRange } from '../lib/utils';
 import { downloadRosterExcel, downloadRosterPdf } from '../api/export';
 import { useAuth } from '../context/AuthContext';
 import { isEmployer, isEmployee } from '../lib/auth';
-import PageHeader from '../components/PageHeader';
+import PageShell from '../components/layout/PageShell';
 
 export default function ViewRoster() {
   const { user } = useAuth();
@@ -144,24 +144,22 @@ export default function ViewRoster() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        pathname={location.pathname}
-        subtitle={
-          employeeUser && myProfile
-            ? `${myProfile.emp_name} · ${myProfile.emp_code} — read-only schedule`
-            : employer
-              ? 'Search and publish rosters for your team'
-              : undefined
-        }
-        actions={
-          employeeUser ? (
-            <Button variant="secondary" onClick={() => loadMyRoster(dateFrom, dateTo)} disabled={loading}>
-              Refresh
-            </Button>
-          ) : null
-        }
-      />
+    <PageShell
+      subtitle={
+        employeeUser && myProfile
+          ? `${myProfile.emp_name} · ${myProfile.emp_code} — read-only schedule`
+          : employer
+            ? 'Search and publish rosters for your team'
+            : undefined
+      }
+      actions={
+        employeeUser ? (
+          <Button variant="secondary" onClick={() => loadMyRoster(dateFrom, dateTo)} disabled={loading}>
+            Refresh
+          </Button>
+        ) : null
+      }
+    >
 
       {periodStatus.status === 'PUBLISHED' && (
         <div className="flex flex-wrap items-center gap-2">
@@ -273,6 +271,6 @@ export default function ViewRoster() {
           onSaved={() => loadRoster(employees, dateFrom, dateTo)}
         />
       )}
-    </div>
+    </PageShell>
   );
 }

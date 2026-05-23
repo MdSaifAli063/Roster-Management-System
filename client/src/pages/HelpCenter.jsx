@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, ChevronDown, ChevronUp, BookOpen, FileText, GraduationCap, Shield } from 'lucide-react';
-import { SettingsPageHeader } from '../components/settings/SettingsShell';
+import PageShell from '../components/layout/PageShell';
 import DashboardPanel from '../components/dashboard/DashboardPanel';
 import { HELP_ARTICLES, HELP_FAQS, HELP_GUIDES } from '../data/helpCenterFaqs';
 import { cn } from '../lib/utils';
@@ -63,11 +63,7 @@ export default function HelpCenter() {
   };
 
   return (
-    <div className="-mx-3 -mt-2 space-y-6 sm:-mx-5 md:-mx-6">
-      <SettingsPageHeader
-        title="Help Center"
-        subtitle="Find solutions and support for common RosterPro questions."
-      />
+    <PageShell subtitle="Find solutions and support for common RosterPro questions.">
 
       <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-600 to-cyan-600 px-6 py-10 text-center text-white shadow-lg sm:px-10">
         <h2 className="font-display text-2xl font-bold sm:text-3xl">Find What You Need</h2>
@@ -197,6 +193,6 @@ export default function HelpCenter() {
           </div>
         </DashboardPanel>
       )}
-    </div>
+    </PageShell>
   );
 }

@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { cn } from '../lib/utils';
 import PlanGate from '../components/PlanGate';
+import PageShell from '../components/layout/PageShell';
 
 export default function PdfExtract() {
   const [file, setFile] = useState(null);
@@ -107,13 +108,7 @@ export default function PdfExtract() {
 
   return (
     <PlanGate feature="pdf_extractor">
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-navy dark:text-white">PDF Extractor</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Extract text, tables, and metadata from PDF files — offline, no AI.
-        </p>
-      </div>
+    <PageShell subtitle="Extract text, tables, and metadata from PDF files — offline, no AI.">
 
       {engine && (
         <div
@@ -371,7 +366,7 @@ export default function PdfExtract() {
           )}
         </>
       )}
-    </div>
+    </PageShell>
     </PlanGate>
   );
 }

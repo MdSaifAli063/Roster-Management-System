@@ -4,6 +4,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input, Select } from '../components/ui/Input';
 import { Trash2 } from 'lucide-react';
+import PageShell from '../components/layout/PageShell';
 
 export default function Holidays() {
   const [holidays, setHolidays] = useState([]);
@@ -67,9 +68,7 @@ export default function Holidays() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Holidays</h1>
-
+    <PageShell subtitle="Manage public holidays, imports, and plant-specific dates.">
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Add Holiday">
           <form onSubmit={addHoliday} className="space-y-3">
@@ -154,6 +153,6 @@ export default function Holidays() {
         </table>
         </div>
       </Card>
-    </div>
+    </PageShell>
   );
 }

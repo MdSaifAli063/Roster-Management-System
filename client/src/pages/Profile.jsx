@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { User, Mail, Shield, Calendar, Settings, Pencil, Camera, X, Check, Loader2 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import PageHeader from '../components/PageHeader';
+import PageShell from '../components/layout/PageShell';
 import UserAvatar from '../components/UserAvatar';
 import { Input } from '../components/ui/Input';
 import { CardSkeleton } from '../components/ui/Skeleton';
@@ -136,19 +136,18 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl space-y-6">
+      <PageShell maxWidth="sm" subtitle="Loading profile…">
         <CardSkeleton />
         <CardSkeleton />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <PageHeader
-        pathname={location.pathname}
-        subtitle="Manage your account information and photo"
-        actions={
+    <PageShell
+      maxWidth="sm"
+      subtitle="Manage your account information and photo"
+      actions={
           !editing ? (
             <Button variant="primary" onClick={startEdit}>
               <Pencil className="h-4 w-4" /> Edit profile
@@ -164,9 +163,8 @@ export default function Profile() {
               </Button>
             </div>
           )
-        }
-      />
-
+      }
+    >
       <Card className="overflow-hidden p-0">
         {/* Header banner */}
         <div className="relative border-b border-[var(--border)] bg-gradient-to-br from-blue-600/20 via-[var(--bg-elevated)] to-cyan-600/10 px-6 py-10 text-center">
@@ -259,7 +257,7 @@ export default function Profile() {
           App settings
         </Button>
       </div>
-    </div>
+    </PageShell>
   );
 }
 

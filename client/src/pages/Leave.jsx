@@ -6,7 +6,7 @@ import { Input, Select } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 import { ROLES, isEmployer } from '../lib/auth';
 import { Check, X } from 'lucide-react';
-import PageHeader from '../components/PageHeader';
+import PageShell from '../components/layout/PageShell';
 import { useLocation } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 
@@ -92,15 +92,13 @@ export default function Leave() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        pathname={location.pathname}
-        subtitle={
-          isEmployee
-            ? 'Request time off — approved days appear as Leave on your roster'
-            : 'Review and approve employee leave requests'
-        }
-      />
+    <PageShell
+      subtitle={
+        isEmployee
+          ? 'Request time off — approved days appear as Leave on your roster'
+          : 'Review and approve employee leave requests'
+      }
+    >
 
       {isEmployee && (
         <Card title="Leave balance">
@@ -253,6 +251,6 @@ export default function Leave() {
           </div>
         )}
       </Card>
-    </div>
+    </PageShell>
   );
 }

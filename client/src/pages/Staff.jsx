@@ -1,28 +1,37 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import PageShell from '../components/layout/PageShell';
 import Card from '../components/ui/Card';
 import { Input, Select } from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import { AppTable, AppTableBody, AppTableHead, AppTableRow, AppTableTd, AppTableTh } from '../components/ui/AppTable';
 
 export default function Staff() {
   const [list, setList] = useState([]);
   const [q, setQ] = useState('');
   const [employment_type, setType] = useState('');
   const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const load = async () => {
-    const { data } = await api.get('/staff', { params: { q, employment_type, status } });
-    setList(data);
+    setLoading(true);
+    try {
+      const { data } = await api.get('/staff', { params: { q, employment_type, status } });
+      setList(data);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold text-[var(--text-primary)]">Staff</h1>
-      <Card title="Search">
-        <div className="grid gap-3 sm:grid-cols-4">
+    <PageShell subtitle="Search and manage employee records.">
+      <Card title="Search filters">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Input label="Search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name, code, email" />
           <Select label="Type" value={employment_type} onChange={(e) => setType(e.target.value)}>
             <option value="">All</option>
@@ -35,35 +44,46 @@ export default function Staff() {
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
           </Select>
-          <Button className="self-end" variant="primary" onClick={load}>Search</Button>
+          <Button className="self-end sm:col-span-2 lg:col-span-1" variant="primary" onClick={load} disabled={loading}>
+            {loading ? 'Searching…' : 'Search'}
+          </Button>
         </div>
       </Card>
-      <Card title={`${list.length} employees`}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border)] text-[var(--text-secondary)]">
-                <th className="py-2">Code</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Plant</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((e) => (
-                <tr key={e.id} className="border-b border-[var(--border)]">
-                  <td className="py-2 font-mono">{e.emp_code}</td>
-                  <td>{e.emp_name}</td>
-                  <td>{e.employment_type || '—'}</td>
-                  <td>{e.plant_name || '—'}</td>
-                  <td><Link className="text-[var(--accent-primary)] hover:underline" to={`/staff/${e.id}`}>View</Link></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+
+      <Card title={`${list.length} employees`} padding={false}>
+        <AppTable>
+          <AppTableHead>
+            <AppTableTh>Code</AppTableTh>
+            <AppTableTh>Name</AppTableTh>
+            <AppTableTh>Type</AppTableTh>
+            <AppTableTh>Site</AppTableTh>
+            <AppTableTh />
+          </AppTableHead>
+          <AppTableBody>
+            {list.length === 0 ? (
+              <AppTableRow>
+                <AppTableTd colSpan={5} className="py-10 text-center text-slate-500">
+                  No employees found.
+                </AppTableTd>
+              </AppTableRow>
+            ) : (
+              list.map((e) => (
+                <AppTableRow key={e.id}>
+                  <AppTableTd className="font-mono text-xs">{e.emp_code}</AppTableTd>
+                  <AppTableTd className="font-medium text-slate-900 dark:text-white">{e.emp_name}</AppTableTd>
+                  <AppTableTd>{e.employment_type || '—'}</AppTableTd>
+                  <AppTableTd>{e.plant_name || '—'}</AppTableTd>
+                  <AppTableTd>
+                    <Link className="text-sm font-semibold text-blue-600 hover:text-blue-700" to={`/staff/${e.id}`}>
+                      View
+                    </Link>
+                  </AppTableTd>
+                </AppTableRow>
+              ))
+            )}
+          </AppTableBody>
+        </AppTable>
       </Card>
-    </div>
+    </PageShell>
   );
 }

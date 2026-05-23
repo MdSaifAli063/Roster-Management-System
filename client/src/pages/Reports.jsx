@@ -6,6 +6,7 @@ import { Input, Select } from '../components/ui/Input';
 import { downloadRosterExcel, downloadRosterPdf, downloadReportExport } from '../api/export';
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import PlanGate from '../components/PlanGate';
+import PageShell from '../components/layout/PageShell';
 
 const GROUPS = [
   { value: 'week', label: 'Week' },
@@ -82,9 +83,7 @@ export default function Reports() {
 
   return (
     <PlanGate feature="reports">
-    <div className="space-y-6">
-      <h1 className="font-display text-xl font-bold text-[var(--text-primary)] sm:text-2xl">Reports</h1>
-
+    <PageShell subtitle="Hours, wages, attendance summaries, and exports.">
       <Card title="Date range">
         <div className="grid gap-3 sm:grid-cols-4">
           <Input label="Start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
@@ -211,7 +210,7 @@ export default function Reports() {
           </div>
         )}
       </Card>
-    </div>
+    </PageShell>
     </PlanGate>
   );
 }

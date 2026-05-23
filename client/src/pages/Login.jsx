@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import Logo from '../components/Logo';
 import AuthMarketingPanel from '../components/auth/AuthMarketingPanel';
+import AuthBackLink from '../components/auth/AuthBackLink';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import Button from '../components/ui/Button';
@@ -178,14 +179,10 @@ export default function Login() {
     <div className="flex h-dvh max-h-dvh w-full overflow-hidden bg-white dark:bg-slate-950">
       {/* Left panel — fixed width matches sign-in & sign-up */}
       <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:w-[520px] lg:shrink-0 xl:w-[540px]">
-        <div className="flex min-h-0 flex-1 flex-col justify-center overflow-hidden px-6 py-6 sm:px-10 lg:px-12">
-          <Link
-            to="/"
-            className="mb-4 shrink-0 text-sm font-medium text-slate-500 transition-colors hover:text-blue-600 dark:text-slate-400 lg:hidden"
-          >
-            ← Back to home
-          </Link>
-
+        <div className="shrink-0 px-6 pt-5 sm:px-10 lg:px-12">
+          <AuthBackLink to="/" label="Back to home" />
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col justify-center overflow-hidden px-6 pb-6 sm:px-10 lg:px-12">
           <div className="mx-auto flex w-full max-w-[400px] min-h-0 flex-col justify-center">
             <div className="mb-5 flex shrink-0 justify-center lg:justify-start">
               <Logo variant="full" size="lg" theme={dark ? 'dark' : 'light'} linkTo="/" />

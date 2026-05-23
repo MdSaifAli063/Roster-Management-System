@@ -4,6 +4,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Plus, Pencil } from 'lucide-react';
+import PageShell from '../components/layout/PageShell';
 
 export default function PlantMaster() {
   const [plants, setPlants] = useState([]);
@@ -22,13 +23,14 @@ export default function PlantMaster() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-2xl font-bold text-navy dark:text-white">Plant Master</h1>
-        <Button variant="teal" onClick={() => setForm({ plant_code: '', plant_name: '', location: '', description: '' })}>
-          <Plus className="h-4 w-4" /> Add Plant
+    <PageShell
+      subtitle="Sites and plants used for rostering and holiday rules."
+      actions={
+        <Button variant="primary" onClick={() => setForm({ plant_code: '', plant_name: '', location: '', description: '' })}>
+          <Plus className="h-4 w-4" /> Add plant
         </Button>
-      </div>
+      }
+    >
 
       <Card>
         <Input label="Search" value={search} onChange={(e) => { setSearch(e.target.value); load(e.target.value); }} className="mb-4 max-w-xs" />
@@ -66,6 +68,6 @@ export default function PlantMaster() {
           </Card>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
