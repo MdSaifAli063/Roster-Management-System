@@ -64,7 +64,12 @@ async function migrate() {
     await seedSubscriptionPlans();
   }
 
-  console.log('Database schema applied successfully (v2 + subscriptions).');
+  const oauthPath = path.join(__dirname, 'migrations-auth-oauth.sql');
+  if (fs.existsSync(oauthPath)) {
+    await pool.query(fs.readFileSync(oauthPath, 'utf8'));
+  }
+
+  console.log('Database schema applied successfully (v2 + subscriptions + oauth).');
   await pool.end();
 }
 

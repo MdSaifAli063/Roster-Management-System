@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import api from '../api/client';
 import Button from './ui/Button';
-import { Input, Select, Toggle } from './ui/Input';
+import { Select, Toggle } from './ui/Input';
 import { formatTime } from '../lib/utils';
 import { useToast } from '../context/ToastContext';
 import { X, Clock } from 'lucide-react';

@@ -506,11 +506,12 @@ router.post('/mark-out', async (req, res) => {
 
     const { rows } = await query(
       `INSERT INTO attendance_records (emp_id, attendance_date, punch_out, status, source)
-       VALUES ($1, $2, $3, 'PRESENT', 'MARK_IN')
+       VALUES ($1, $2, $3, 'PRESENT', 'MARK_OUT')
        ON CONFLICT (emp_id, attendance_date) DO UPDATE SET
          punch_out = EXCLUDED.punch_out,
          punch_in = COALESCE(attendance_records.punch_in, EXCLUDED.punch_in),
-         status = 'PRESENT'
+         status = 'PRESENT',
+         source = 'MARK_OUT'
        RETURNING *`,
       [employee.id, today, punchOut]
     );

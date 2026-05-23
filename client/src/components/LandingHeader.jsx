@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Menu, X, ChevronDown, Sparkles } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Menu, X, ChevronDown } from 'lucide-react';
 import Button from './ui/Button';
 import Logo from './Logo';
 import { ThemeToggleButton } from './ThemeToggle';
@@ -24,6 +24,7 @@ export default function LandingHeader({ active = 'home' }) {
   const signInPath = '/login';
   const [menuOpen, setMenuOpen] = useState(false);
   const isHome = active === 'home';
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
@@ -37,19 +38,11 @@ export default function LandingHeader({ active = 'home' }) {
   const goSection = (id) => {
     closeMenu();
     if (isHome) scrollToSection(id);
-    else window.location.href = `/#${id}`;
+    else navigate({ pathname: '/', hash: id });
   };
 
   return (
     <>
-      <div className="landing-announcement">
-        <Link to="/pricing" className="landing-announcement-link">
-          <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
-          <span>New: Professional trial with full roster, leave &amp; attendance tools</span>
-          <span className="font-semibold underline-offset-2 hover:underline">See plans →</span>
-        </Link>
-      </div>
-
       <header className="landing-header sticky top-0 z-50 border-b border-[var(--border)] backdrop-blur-xl">
         <div className="landing-container flex h-16 items-center justify-between gap-3 lg:h-[4.5rem]">
           <Logo linkTo="/" onClick={closeMenu} variant="full" size="md" />
@@ -84,7 +77,7 @@ export default function LandingHeader({ active = 'home' }) {
                   Sign in
                 </Button>
               )}
-              <Button as={Link} to={appPath} variant="primary" className="min-h-10 rounded-lg px-5 font-semibold">
+              <Button as={Link} to={appPath} variant="primary" className="landing-btn-primary min-h-10 rounded-lg px-5 font-semibold">
                 {user ? 'Open workspace' : 'Sign up for free'}
               </Button>
             </div>
@@ -123,7 +116,7 @@ export default function LandingHeader({ active = 'home' }) {
                     Sign in
                   </Button>
                 )}
-                <Button as={Link} to={appPath} onClick={closeMenu} variant="primary" className="min-h-11 w-full">
+                <Button as={Link} to={appPath} onClick={closeMenu} variant="primary" className="landing-btn-primary min-h-11 w-full">
                   {user ? 'Open workspace' : 'Sign up for free'}
                 </Button>
               </div>

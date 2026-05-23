@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils';
 
 export const buttonVariants = {
   primary:
-    'bg-gradient-to-r from-blue-600 to-blue-500 text-white border border-blue-500/30 btn-glow hover:from-blue-500 hover:to-blue-400',
+    'bg-gradient-to-r from-blue-500 to-blue-400 text-white border border-blue-400/30 btn-glow hover:from-blue-400 hover:to-blue-300',
   secondary:
     'bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--glass-hover)]',
   outline:

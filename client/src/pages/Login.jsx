@@ -226,7 +226,7 @@ export default function Login() {
               <div className="min-h-[292px]">
                 {isSignUp ? (
                   <form onSubmit={handleSignUp} className="space-y-2.5">
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                       <AuthField
                         label="Full name"
                         required
@@ -260,7 +260,7 @@ export default function Login() {
                         ))}
                       </select>
                     </label>
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                       <AuthField
                         label="Password"
                         required
