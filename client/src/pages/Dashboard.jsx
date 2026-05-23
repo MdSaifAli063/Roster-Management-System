@@ -1,249 +1,244 @@
 import { useEffect, useState, useCallback } from 'react';
-import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
-import { ChevronRight, Users, CalendarCheck, AlertTriangle, Palmtree, Eye, Clock, Briefcase, Plus, FileDown, Calendar } from 'lucide-react';
-import Card from '../components/ui/Card';
+import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
+import {
+  Users,
+  Palmtree,
+  CalendarCheck,
+  BarChart3,
+  Plus,
+  Eye,
+  Briefcase,
+  Clock,
+  Calendar,
+  Timer,
+} from 'lucide-react';
 import Button from '../components/ui/Button';
-import KpiCard from '../components/KpiCard';
-import PageHeader from '../components/PageHeader';
-import MonthCalendar from '../components/MonthCalendar';
-import { CardSkeleton } from '../components/ui/Skeleton';
-import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../lib/auth';
-import { formatTime } from '../lib/utils';
 import api from '../api/client';
+import DashboardStatCard from '../components/dashboard/DashboardStatCard';
+import AttendanceOverviewChart from '../components/dashboard/AttendanceOverviewChart';
+import {
+  DashboardAgendaCard,
+  DashboardScheduleCard,
+  DashboardTasksList,
+} from '../components/dashboard/DashboardSideColumn';
+import DashboardActivityTable from '../components/dashboard/DashboardActivityTable';
+import DashboardPanel from '../components/dashboard/DashboardPanel';
+import DashboardDateRangePicker, { weekBounds } from '../components/dashboard/DashboardDateRangePicker';
+import MonthCalendar from '../components/MonthCalendar';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const location = useLocation();
   const employeeMode = user?.role === ROLES.EMPLOYEE;
   const today = new Date();
+
+  const [loading, setLoading] = useState(true);
+  const [employer, setEmployer] = useState(null);
+  const [employee, setEmployee] = useState(null);
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth() + 1);
-
-  const [stats, setStats] = useState({ a: 0, b: 0, c: 0, d: 0 });
-  const [tasks, setTasks] = useState([]);
-  const [events, setEvents] = useState([]);
   const [calendarDays, setCalendarDays] = useState({});
-  const [calLoading, setCalLoading] = useState(true);
-  const [empData, setEmpData] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  const loadCalendar = useCallback((y, m) => {
-    setCalLoading(true);
+  const initialRange = weekBounds(today);
+  const [rangeFrom, setRangeFrom] = useState(initialRange.from);
+  const [rangeTo, setRangeTo] = useState(initialRange.to);
+
+  const loadEmployer = useCallback(() => {
     return api
-      .get('/calendar', { params: { year: y, month: m } })
-      .then((res) => {
-        setCalendarDays(res.data.days || {});
-        const upcoming = (res.data.upcoming || []).map((e) => ({
-          date: new Date(e.date),
-          title: e.label,
-          national: e.national,
-        }));
-        if (upcoming.length) setEvents(upcoming);
-      })
-      .catch(() => setCalendarDays({}))
-      .finally(() => setCalLoading(false));
-  }, []);
-
-  const loadStaff = useCallback(() => {
-    const from = format(startOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd');
-    const to = format(endOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd');
-    const todayStr = format(today, 'yyyy-MM-dd');
-    return Promise.all([
-      api.get('/employees'),
-      api.get('/rosters', { params: { start_date: todayStr, end_date: todayStr } }).catch(() => ({ data: [] })),
-      api.get('/leave', { params: { status: 'PENDING' } }),
-      api.get('/holidays', { params: { year: today.getFullYear(), month: today.getMonth() + 1 } }).catch(() => ({ data: [] })),
-      api.get('/attendance/mismatches', { params: { start_date: from, end_date: to } }),
-    ]).then(([emp, roster, leave, holidays, mismatch]) => {
-      const rosterToday = Array.isArray(roster.data) ? roster.data.filter((r) => r.status === 'W').length : emp.data.length;
-      const holidayCount = Array.isArray(holidays.data) ? holidays.data.length : 0;
-      setStats({
-        a: emp.data.length,
-        b: rosterToday,
-        c: leave.data.length,
-        d: holidayCount,
-      });
-      setTasks([
-        { title: 'Approve leave requests', count: leave.data.length, urgent: leave.data.length > 0, to: '/leave', action: 'Review' },
-        { title: 'Review attendance mismatches', count: mismatch.data.count || 0, urgent: (mismatch.data.count || 0) > 0, to: '/actual-roster', action: 'View' },
-        { title: 'Update holiday calendar', count: 0, urgent: false, to: '/holidays', action: 'Open' },
-      ]);
-    });
-  }, []);
+      .get('/dashboard/employer', { params: { from: rangeFrom, to: rangeTo } })
+      .then((res) => setEmployer(res.data));
+  }, [rangeFrom, rangeTo]);
 
   const loadEmployee = useCallback(() => {
-    return api.get('/dashboard/employee').then((res) => {
-      const data = res.data;
-      setEmpData(data);
-      if (!data.linked) return;
-
-      const pendingLeave = data.pendingLeave || 0;
-      const week = data.weekSummary || {};
-      setStats({
-        a: week.workingDays || 0,
-        b: week.weeklyOffs || 0,
-        c: pendingLeave,
-        d: week.holidays || 0,
-      });
-
-      const needAct = [];
-      if (pendingLeave > 0) {
-        needAct.push({
-          title: 'Leave request awaiting decision',
-          count: pendingLeave,
-          urgent: true,
-          to: '/leave',
-          action: 'View',
-          meta: 'Pending approval',
-        });
-      }
-      if (data.today?.status === 'W' && !data.todayAttendance?.punch_in) {
-        needAct.push({ title: 'Mark attendance for today', count: 1, urgent: true, to: '/attendance', action: 'Mark In', meta: format(today, 'd MMM yyyy') });
-      }
-      needAct.push({ title: 'View my roster this week', count: data.weekRoster?.length || 0, urgent: false, to: '/view-roster', action: 'Open', meta: `${week.from} – ${week.to}` });
-      setTasks(needAct.length ? needAct : [{ title: 'No pending actions', count: 0, urgent: false, to: '/view-roster', action: 'Open roster', meta: 'You are up to date' }]);
-
-      const ev = [];
-      if (data.today?.status === 'W') {
-        ev.push({ date: today, title: `Today: ${formatTime(data.today.shift_start)} – ${formatTime(data.today.shift_end)}` });
-      } else if (data.today?.status === 'WO') {
-        ev.push({ date: today, title: 'Today: Weekly off' });
-      }
-      setEvents((prev) => [...ev, ...prev].slice(0, 8));
+    return Promise.all([
+      api.get('/dashboard/employee'),
+      api.get('/calendar', { params: { year: viewYear, month: viewMonth } }),
+    ]).then(([dash, cal]) => {
+      setEmployee(dash.data);
+      setCalendarDays(cal.data.days || {});
     });
-  }, []);
+  }, [viewYear, viewMonth]);
 
-  const refresh = useCallback(() => {
+  useEffect(() => {
     setLoading(true);
-    Promise.all([
-      employeeMode ? loadEmployee() : loadStaff(),
-      loadCalendar(viewYear, viewMonth),
-    ])
-      .catch(() => {})
+    const p = employeeMode ? loadEmployee() : loadEmployer();
+    p.catch(() => {})
       .finally(() => setLoading(false));
-  }, [employeeMode, loadEmployee, loadStaff, loadCalendar, viewYear, viewMonth]);
+  }, [employeeMode, loadEmployee, loadEmployer]);
 
-  useEffect(() => { refresh(); }, [refresh]);
-  useEffect(() => { loadCalendar(viewYear, viewMonth); }, [viewYear, viewMonth, loadCalendar]);
+  if (employeeMode) {
+    const emp = employee;
+    const stats = emp?.weekSummary
+      ? {
+          a: emp.weekSummary.workingDays || 0,
+          b: emp.weekSummary.weeklyOffs || 0,
+          c: emp.pendingLeave || 0,
+          d: emp.weekSummary.holidays || 0,
+        }
+      : { a: 0, b: 0, c: 0, d: 0 };
 
-  const subtitle = employeeMode && empData?.employee
-    ? `${empData.employee.emp_name} · ${format(today, 'EEEE, d MMMM yyyy')}`
-    : format(today, 'EEEE, d MMMM yyyy');
+    return (
+      <div className="-mx-3 -mt-2 space-y-6 sm:-mx-5 md:-mx-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-blue-600 dark:text-blue-400">My workspace</p>
+            <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">
+              My Dashboard
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {emp?.employee?.emp_name ? `${emp.employee.emp_name} · ` : ''}
+              {format(today, 'EEEE, d MMMM yyyy')}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button as={Link} to="/attendance" variant="primary">
+              <CalendarCheck className="h-4 w-4" /> Attendance
+            </Button>
+            <Button as={Link} to="/view-roster" variant="secondary">
+              <Eye className="h-4 w-4" /> My roster
+            </Button>
+          </div>
+        </div>
 
-  const statCards = employeeMode
-    ? [
-        { label: 'Working days (week)', value: stats.a, icon: Briefcase, to: '/view-roster', accent: 'green' },
-        { label: 'Weekly offs', value: stats.b, icon: Clock, to: '/view-roster', accent: 'amber' },
-        { label: 'Leave pending', value: stats.c, icon: Palmtree, to: '/leave', accent: 'red' },
-        { label: 'Holidays (week)', value: stats.d, icon: CalendarCheck, to: '/view-roster', accent: 'blue' },
-      ]
-    : [
-        { label: 'Total Employees', value: stats.a, icon: Users, to: '/employees', accent: 'blue' },
-        { label: 'On Roster Today', value: stats.b, icon: CalendarCheck, to: '/manage-roster', accent: 'green' },
-        { label: 'On Leave', value: stats.c, icon: Palmtree, to: '/leave', accent: 'amber' },
-        { label: 'Holidays This Month', value: stats.d, icon: AlertTriangle, to: '/holidays', accent: 'red' },
-      ];
+        {emp && !emp.linked && (
+          <DashboardPanel className="border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10">
+            <p className="text-sm text-amber-800 dark:text-amber-200">{emp.message}</p>
+          </DashboardPanel>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <DashboardStatCard label="Working days (week)" value={stats.a} icon={Briefcase} to="/view-roster" loading={loading} />
+          <DashboardStatCard label="Weekly offs" value={stats.b} icon={Clock} to="/view-roster" loading={loading} />
+          <DashboardStatCard label="Leave pending" value={stats.c} icon={Palmtree} to="/leave" loading={loading} />
+          <DashboardStatCard label="Holidays (week)" value={stats.d} icon={CalendarCheck} to="/view-roster" loading={loading} />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <DashboardPanel>
+            <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">Roster calendar</h3>
+            <div className="mt-4">
+              <MonthCalendar
+                size="md"
+                year={viewYear}
+                month={viewMonth}
+                days={calendarDays}
+                loading={loading}
+                onMonthChange={(y, m) => {
+                  setViewYear(y);
+                  setViewMonth(m);
+                  api.get('/calendar', { params: { year: y, month: m } }).then((res) => setCalendarDays(res.data.days || {}));
+                }}
+              />
+            </div>
+          </DashboardPanel>
+          <DashboardTasksList
+            loading={loading}
+            tasks={
+              emp?.pendingLeave > 0
+                ? [
+                    { title: 'Leave awaiting decision', count: emp.pendingLeave, urgent: true, to: '/leave' },
+                    { title: 'View my roster', count: emp.weekRoster?.length || 0, urgent: false, to: '/view-roster' },
+                  ]
+                : [{ title: 'View my roster', count: emp?.weekRoster?.length || 0, urgent: false, to: '/view-roster' }]
+            }
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const s = employer?.stats;
+
+  const handleRangeChange = (from, to) => {
+    setRangeFrom(from);
+    setRangeTo(to);
+  };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        pathname={location.pathname}
-        subtitle={subtitle}
-        actions={
-          employeeMode ? (
-            <>
-              <Button as={Link} to="/attendance" variant="primary"><CalendarCheck className="h-4 w-4" /> Attendance</Button>
-              <Button as={Link} to="/view-roster" variant="secondary"><Eye className="h-4 w-4" /> My Roster</Button>
-            </>
-          ) : (
-            <Button as={Link} to="/manage-roster" variant="primary"><Plus className="h-4 w-4" /> Create Roster</Button>
-          )
-        }
-      />
-
-      {employeeMode && !loading && empData && !empData.linked && (
-        <Card accent="amber" className="border-amber-500/30 bg-amber-500/5">
-          <p className="text-sm text-amber-200">{empData.message}</p>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
-          : statCards.map((s) => <KpiCard key={s.label} {...s} loading={loading} />)}
+    <div className="dashboard-shell -mx-3 -mt-2 space-y-6 sm:-mx-5 md:-mx-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Overview</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Dashboard
+          </h1>
+          <p className="mt-1 max-w-xl text-sm text-slate-500 dark:text-slate-400">
+            Track workforce attendance, leave, and roster health for your organization.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className="hidden h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/30 sm:flex"
+            title="Live roster week"
+          >
+            <Timer className="h-5 w-5" />
+          </span>
+          <DashboardDateRangePicker from={rangeFrom} to={rangeTo} onChange={handleRangeChange} />
+          <Button as={Link} to="/manage-roster" variant="primary" className="shadow-md shadow-blue-500/20">
+            <Plus className="h-4 w-4" /> Create roster
+          </Button>
+        </div>
       </div>
 
-      {loading ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <CardSkeleton />
-          <CardSkeleton />
-        </div>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card title="Roster Calendar">
-            <MonthCalendar
-              size="md"
-              year={viewYear}
-              month={viewMonth}
-              days={calendarDays}
-              loading={calLoading}
-              onMonthChange={(y, m) => { setViewYear(y); setViewMonth(m); }}
-            />
-            <p className="mt-3 text-xs text-[var(--text-secondary)]">
-              Public holidays and company holidays from your roster.
-            </p>
-          </Card>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <DashboardStatCard
+          label="Total employees"
+          value={s?.totalEmployees?.toLocaleString() ?? '—'}
+          icon={Users}
+          to="/staff"
+          trend={s?.trends?.employees}
+          loading={loading}
+        />
+        <DashboardStatCard
+          label="Leave requests"
+          value={s?.pendingLeave ?? '—'}
+          icon={Palmtree}
+          to="/leave"
+          trend={s?.trends?.leave}
+          loading={loading}
+        />
+        <DashboardStatCard
+          label="Attendance rate"
+          value={s ? `${s.attendanceRate}%` : '—'}
+          icon={BarChart3}
+          to="/actual-roster"
+          trend={s?.trends?.attendance}
+          loading={loading}
+        />
+        <DashboardStatCard
+          label="Holidays this month"
+          value={s?.holidaysMonth ?? '—'}
+          icon={Calendar}
+          to="/holidays"
+          loading={loading}
+        />
+      </div>
 
-          <Card title="Recent Activity">
-            <ul className="space-y-2">
-              {tasks.map((t, i) => (
-                <li key={t.title} className="stagger-row" style={{ animationDelay: `${i * 50}ms` }}>
-                  <Link
-                    to={t.to}
-                    className={`flex min-w-0 flex-col gap-2 rounded-lg border p-3 transition-all duration-200 hover:bg-white/5 sm:flex-row sm:items-center sm:justify-between ${
-                      t.urgent ? 'border-amber-500/30 bg-amber-500/5' : 'border-[var(--border)]'
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-[var(--text-primary)]">{t.title}</p>
-                      <p className="text-xs text-[var(--text-secondary)]">{t.meta || `${t.count} pending`}</p>
-                    </div>
-                    <span className="flex items-center gap-1 text-xs font-medium text-blue-400">
-                      {t.action} <ChevronRight className="h-4 w-4 opacity-50" />
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Card>
+      <div className="grid gap-4 xl:grid-cols-3">
+        <div className="xl:col-span-2">
+          <AttendanceOverviewChart
+            data={employer?.weeklyChart}
+            attendanceRate={employer?.weekAttendancePct ?? employer?.stats?.attendanceRate ?? 0}
+            attendedToday={employer?.stats?.attendedToday ?? 0}
+            onRosterToday={employer?.stats?.onRosterToday ?? 0}
+            rangeFrom={rangeFrom}
+            rangeTo={rangeTo}
+            loading={loading}
+          />
         </div>
-      )}
-
-      {!loading && events.length > 0 && (
-        <Card title="Upcoming Events">
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {events.map((e, i) => (
-              <li key={`${e.title}-${i}`} className="flex gap-3 rounded-lg border border-[var(--border)] p-3 text-sm">
-                <span className={`shrink-0 rounded-md px-2 py-1 font-mono text-xs font-medium ${e.national ? 'bg-red-500/15 text-red-300' : 'bg-blue-500/15 text-blue-300'}`}>
-                  {format(e.date, 'd MMM')}
-                </span>
-                <span className="text-[var(--text-primary)]">{e.title}</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {!employeeMode && !loading && (
-        <div className="flex flex-wrap gap-3">
-          <Button as={Link} to="/manage-roster" variant="primary"><Calendar className="h-4 w-4" /> Create Roster</Button>
-          <Button as={Link} to="/holidays" variant="secondary"><Palmtree className="h-4 w-4" /> Add Holiday</Button>
-          <Button as={Link} to="/view-roster" variant="secondary"><Eye className="h-4 w-4" /> View Today&apos;s Roster</Button>
-          <Button as={Link} to="/reports" variant="secondary"><FileDown className="h-4 w-4" /> Export Report</Button>
+        <div className="flex flex-col gap-4">
+          <DashboardAgendaCard tasks={employer?.tasks} loading={loading} />
+          <DashboardScheduleCard
+            schedule={employer?.schedule}
+            events={employer?.events}
+            loading={loading}
+          />
         </div>
-      )}
+      </div>
+
+      <DashboardActivityTable rows={employer?.recentActivity} loading={loading} rangeFrom={rangeFrom} rangeTo={rangeTo} />
     </div>
   );
 }
