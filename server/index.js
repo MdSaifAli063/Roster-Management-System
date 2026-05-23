@@ -20,6 +20,14 @@ async function start() {
   try {
     await testConnection();
     await ensureV2Schema();
+    if (process.env.SEED_DEMO_ON_START === 'true') {
+      try {
+        const { ensureDemoAccount } = require('./services/demoAccountSeed');
+        await ensureDemoAccount();
+      } catch (err) {
+        console.warn('Demo account seed skipped:', err.message);
+      }
+    }
     console.log('Database connected (schema v2 ensured)');
   } catch (err) {
     console.error('\n❌ Database connection failed:', err.message);
