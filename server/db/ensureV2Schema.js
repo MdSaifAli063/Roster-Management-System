@@ -31,6 +31,11 @@ async function ensureRosterColumns() {
   await query('ALTER TABLE rosters ADD COLUMN IF NOT EXISTS total_hours NUMERIC(5,2)');
 }
 
+async function ensureEmployeeColumns() {
+  await query(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ACTIVE'`);
+  await query(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS employment_type VARCHAR(30)`);
+}
+
 /** Idempotent — runs every startup until columns/tables exist (fixes partial migration failures). */
 async function ensureSubscriptionSchema() {
   await query(`ALTER TABLE businesses ADD COLUMN IF NOT EXISTS plan_id VARCHAR(20) DEFAULT 'starter'`);
@@ -105,6 +110,11 @@ async function ensureOAuthSchema() {
 async function ensureV2Schema() {
   await ensureSubscriptionSchema();
   await ensureOAuthSchema();
+  try {
+    await ensureEmployeeColumns();
+  } catch (err) {
+    console.warn('ensureEmployeeColumns:', err.message?.slice(0, 200));
+  }
 
   if (applied) return;
 

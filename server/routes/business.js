@@ -3,6 +3,8 @@ const { query } = require('../db');
 const { authenticate, requireEmployer } = require('../middleware/auth');
 const { provisionEmployeeLogins } = require('../services/employeeCredentials');
 const { getSubscriptionContext, startProfessionalTrial, ensureBusinessForOwner } = require('../services/subscription');
+const { parseJsonbBool } = require('../utils/settings');
+const { countActiveEmployeesSql } = require('../utils/employees');
 
 const router = express.Router();
 router.use(authenticate);
@@ -14,6 +16,178 @@ async function getBusinessForUser(userId) {
   );
   return rows[0] || null;
 }
+
+function serializeBusiness(biz) {
+  if (!biz) return null;
+  return {
+    id: biz.id,
+    business_name: biz.business_name,
+    tax_id: biz.tax_id,
+    country_code: biz.country_code,
+    state_code: biz.state_code,
+    location_name: biz.location_name,
+    timezone: biz.timezone,
+    operating_days: biz.operating_days || {},
+    min_employee_age: biz.min_employee_age ?? 18,
+    employment_types: biz.employment_types || [],
+    pay_rules: biz.pay_rules || {},
+    is_onboarded: biz.is_onboarded,
+    plan_id: biz.plan_id,
+    subscription_status: biz.subscription_status,
+    trial_ends_at: biz.trial_ends_at,
+    current_period_end: biz.current_period_end,
+    created_at: biz.created_at,
+    updated_at: biz.updated_at,
+  };
+}
+
+router.get('/organization', requireEmployer, async (req, res) => {
+  try {
+    let biz = await getBusinessForUser(req.user.id);
+    if (!biz) {
+      biz = await ensureBusinessForOwner(req.user.id, 'My organization');
+    }
+
+    const [
+      empRes,
+      plantRes,
+      leaveRes,
+      shiftRes,
+      settingsRes,
+      plantsRes,
+      ownerRes,
+    ] = await Promise.all([
+      query(countActiveEmployeesSql()),
+      query('SELECT COUNT(*)::int AS c FROM plants'),
+      query(`SELECT COUNT(*)::int AS c FROM leave_requests WHERE status = 'PENDING'`),
+      query('SELECT COUNT(*)::int AS c FROM shifts'),
+      query(
+        `SELECT value FROM app_settings WHERE business_id = $1 AND key = 'auto_approve_leave'`,
+        [biz.id]
+      ),
+      query(
+        'SELECT id, plant_code, plant_name, location, description FROM plants ORDER BY plant_name LIMIT 50'
+      ),
+      query('SELECT id, name, email, created_at FROM users WHERE id = $1', [req.user.id]),
+    ]);
+
+    const subscription = await getSubscriptionContext(req.user.id);
+
+    res.json({
+      business: serializeBusiness(biz),
+      owner: ownerRes.rows[0] || null,
+      stats: {
+        employees: empRes.rows[0]?.c || 0,
+        plants: plantRes.rows[0]?.c || 0,
+        pendingLeave: leaveRes.rows[0]?.c || 0,
+        shifts: shiftRes.rows[0]?.c || 0,
+      },
+      plants: plantsRes.rows,
+      settings: {
+        auto_approve_leave: parseJsonbBool(settingsRes.rows[0]?.value),
+      },
+      subscription: {
+        effectivePlanId: subscription.effectivePlanId,
+        subscriptionStatus: subscription.subscriptionStatus,
+        trialActive: subscription.trialActive,
+        trialDaysLeft: subscription.trialDaysLeft,
+        trialEndsAt: subscription.trialEndsAt,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+        limits: subscription.limits,
+      },
+    });
+  } catch (err) {
+    console.error('business/organization GET', err);
+    res.status(500).json({
+      error: 'Failed to load organization',
+      detail: process.env.NODE_ENV !== 'production' ? err.message : undefined,
+    });
+  }
+});
+
+router.patch('/organization', requireEmployer, async (req, res) => {
+  try {
+    let biz = await getBusinessForUser(req.user.id);
+    if (!biz) {
+      biz = await ensureBusinessForOwner(req.user.id, req.body.business_name || 'My organization');
+    }
+
+    const {
+      business_name,
+      tax_id,
+      country_code,
+      state_code,
+      location_name,
+      timezone,
+      operating_days,
+      min_employee_age,
+      employment_types,
+      pay_rules,
+      auto_approve_leave,
+    } = req.body;
+
+    const updates = [];
+    const params = [];
+    let i = 1;
+
+    if (business_name !== undefined) {
+      const trimmed = String(business_name).trim();
+      if (!trimmed) return res.status(400).json({ error: 'Business name is required' });
+      updates.push(`business_name = $${i++}`);
+      params.push(trimmed);
+    }
+    if (tax_id !== undefined) { updates.push(`tax_id = $${i++}`); params.push(tax_id || null); }
+    if (country_code !== undefined) { updates.push(`country_code = $${i++}`); params.push(country_code); }
+    if (state_code !== undefined) { updates.push(`state_code = $${i++}`); params.push(state_code || null); }
+    if (location_name !== undefined) { updates.push(`location_name = $${i++}`); params.push(location_name || null); }
+    if (timezone !== undefined) { updates.push(`timezone = $${i++}`); params.push(timezone); }
+    if (operating_days !== undefined) {
+      updates.push(`operating_days = $${i++}::jsonb`);
+      params.push(JSON.stringify(operating_days));
+    }
+    if (min_employee_age !== undefined) { updates.push(`min_employee_age = $${i++}`); params.push(min_employee_age); }
+    if (employment_types !== undefined) {
+      updates.push(`employment_types = $${i++}::jsonb`);
+      params.push(JSON.stringify(employment_types));
+    }
+    if (pay_rules !== undefined) {
+      updates.push(`pay_rules = $${i++}::jsonb`);
+      params.push(JSON.stringify(pay_rules));
+    }
+    updates.push('updated_at = NOW()');
+
+    if (updates.length) {
+      params.push(biz.id);
+      const { rows } = await query(
+        `UPDATE businesses SET ${updates.join(', ')} WHERE id = $${i} RETURNING *`,
+        params
+      );
+      biz = rows[0];
+    }
+
+    if (auto_approve_leave !== undefined) {
+      await query(
+        `INSERT INTO app_settings (business_id, key, value)
+         VALUES ($1, 'auto_approve_leave', $2::jsonb)
+         ON CONFLICT (business_id, key) DO UPDATE SET value = EXCLUDED.value`,
+        [biz.id, JSON.stringify(!!auto_approve_leave)]
+      );
+    }
+
+    const { rows: settingsRows } = await query(
+      `SELECT value FROM app_settings WHERE business_id = $1 AND key = 'auto_approve_leave'`,
+      [biz.id]
+    );
+
+    res.json({
+      business: serializeBusiness(biz),
+      settings: { auto_approve_leave: parseJsonbBool(settingsRows[0]?.value) },
+    });
+  } catch (err) {
+    console.error('business/organization PATCH', err);
+    res.status(500).json({ error: err.message || 'Failed to save organization' });
+  }
+});
 
 router.get('/status', async (req, res) => {
   try {

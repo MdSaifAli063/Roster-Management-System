@@ -215,11 +215,24 @@ router.post('/logout', (_req, res) => {
 router.get('/me', authenticate, async (req, res) => {
   try {
     const { rows } = await query(
-      'SELECT id, name, email, role, avatar_url, created_at FROM users WHERE id = $1',
+      `SELECT u.id, u.name, u.email, u.role, u.avatar_url, u.created_at,
+              b.business_name
+       FROM users u
+       LEFT JOIN businesses b ON b.owner_user_id = u.id
+       WHERE u.id = $1`,
       [req.user.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'User not found' });
-    res.json(rows[0]);
+    const row = rows[0];
+    res.json({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      role: row.role,
+      avatar_url: row.avatar_url,
+      created_at: row.created_at,
+      businessName: row.business_name || null,
+    });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch user' });
   }
