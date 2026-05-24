@@ -21,6 +21,16 @@ const GoogleAuthConfigContext = createContext({
   requestSignIn: () => {},
 });
 
+function isValidGoogleClientId(value) {
+  const clientId = String(value || '').trim();
+  const normalized = clientId.toLowerCase();
+  if (!clientId || !clientId.endsWith('.apps.googleusercontent.com')) return false;
+  if (normalized.includes('xxxx') || normalized.includes('example') || normalized.includes('your-client-id')) {
+    return false;
+  }
+  return true;
+}
+
 export function GoogleAuthConfigProvider({ children }) {
   const [clientId, setClientId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,13 +41,15 @@ export function GoogleAuthConfigProvider({ children }) {
 
   useEffect(() => {
     let cancelled = false;
-    const envClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() || null;
+    const envClientIdRaw = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() || null;
+    const envClientId = isValidGoogleClientId(envClientIdRaw) ? envClientIdRaw : null;
 
     api
       .get('/auth/config')
       .then((res) => {
         if (cancelled) return;
-        const fromApi = res.data?.googleClientId?.trim();
+        const fromApiRaw = res.data?.googleClientId?.trim();
+        const fromApi = isValidGoogleClientId(fromApiRaw) ? fromApiRaw : null;
         setClientId(fromApi || envClientId || null);
       })
       .catch(() => {
