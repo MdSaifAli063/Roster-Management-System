@@ -48,7 +48,6 @@ Employees see a reduced UI: dashboard, read-only roster, their leave/attendance,
 
 ---
 
-
 ## 🏗 Architecture
 
 ### Single-container production (Cloud Run)
@@ -73,6 +72,7 @@ flowchart TB
   Express --> PG
   PG --- Neon
 ```
+
 
 ### Request flow (authenticated)
 
