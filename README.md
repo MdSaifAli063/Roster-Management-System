@@ -73,7 +73,6 @@ flowchart TB
   PG --- Neon
 ```
 
-
 ### Request flow (authenticated)
 
 ```mermaid
