@@ -118,7 +118,6 @@ sequenceDiagram
 
 ## 🧩 Features (detailed)
 
-
 ### 🏠 Dashboard & navigation
 
 - **Dashboard** — Role-specific KPIs; employees can mark punch-in/out from dashboard endpoints.
